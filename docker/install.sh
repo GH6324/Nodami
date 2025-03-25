@@ -9,14 +9,34 @@ REPO_VERSION="1.0.0"
 install_docker() {
    echo "---> install_docker"
 
+
+
    if ! [[ $(docker -v 2>/dev/null) ]]; then
-       echo "Docker 未安装，正在安装..."
-       curl -fsSL https://get.docker.com | bash
-       if ! command -v docker-compose >/dev/null 2>&1; then
-           echo "docker-compose 未安装，正在安装..."
-           sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-           chmod +x /usr/local/bin/docker-compose
-       fi
+        echo "Docker 未安装，正在安装..."
+        if ! [[ $(docker -v 2>/dev/null) ]]; then
+             echo_content skyBlue "---> bash <(https://linuxmirrors.cn/docker.sh)  --source repo.huaweicloud.com/docker-ce  --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true"
+             sudo bash <({{server.docker}})  --source repo.huaweicloud.com/docker-ce  --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true
+        fi
+        if ! [[ $(docker -v 2>/dev/null) ]]; then
+             echo_content skyBlue "---> sh <(curl -sL https://get.docker.com)"
+             sudo sh <(curl -sL https://get.docker.com)
+        fi
+        if ! [[ $(docker -v 2>/dev/null) ]]; then
+              echo_content skyBlue "---> curl -sSL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -"
+              sudo curl -sSL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -
+        fi
+
+        if ! [[ $(docker -v 2>/dev/null) ]]; then
+              echo_content skyBlue "---> curl -sSL https://get.daocloud.io/docker | sh"
+              sudo curl -sSL https://get.daocloud.io/docker | sh
+        fi
+
+
+        if ! [[ $(docker -v 2>/dev/null) ]]; then
+             echo_content skyBlue "---> Docker安装失败"
+             exit 0
+        fi
+
 
        timedatectl set-timezone Asia/Shanghai
        sudo systemctl enable docker
@@ -30,6 +50,12 @@ install_docker() {
       sudo systemctl enable docker && sudo systemctl restart docker
     fi
     echo "---> 你已经安装了Docker"
+  fi
+
+   if ! command -v docker-compose >/dev/null 2>&1; then
+       echo "docker-compose 未安装，正在安装..."
+       sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+       chmod +x /usr/local/bin/docker-compose
   fi
 }
 
