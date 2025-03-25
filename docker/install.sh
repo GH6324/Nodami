@@ -3,7 +3,7 @@
 # 常量
 REPO_URL="https://github.com/YoyoCrafts/Nodami.git"
 REPO_DIR="/root/nodami"
-REPO_VERSION="v1.0.0"
+REPO_VERSION="1.0.0"
 
 # 安装docker
 install_docker() {
