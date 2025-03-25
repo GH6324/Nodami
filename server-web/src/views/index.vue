@@ -11,8 +11,8 @@
             <a href="https://github.com/YoyoCrafts/Nodami.git" class="github-link" target="_blank">
               <span class="icon">📦</span> GitHub 仓库
             </a>
-            <a href="https://t.me/Nodami" class="tg-link" target="_blank">
-              <span class="icon">💬</span> Telegram 交流群 @Nodami
+            <a href="https://t.me/nodami_ui" class="tg-link" target="_blank">
+              <span class="icon">💬</span> Telegram 交流群 @nodami_ui
             </a>
           </div>
         </div>

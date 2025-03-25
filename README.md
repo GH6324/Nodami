@@ -56,7 +56,7 @@ curl -fsSL https://raw.githubusercontent.com/YoyoCrafts/Nodami/refs/heads/nodami
 
 ## 💬 交流群
 
-加入 [Nodami Telegram 交流群 @Nodami](https://t.me/Nodami)，获取实时帮助并与社区交流。
+加入 [Telegram 交流群 @nodami_ui](https://t.me/Nodami)，获取实时帮助并与社区交流。
 
 ---
 
