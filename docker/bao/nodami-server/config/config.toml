@@ -1,7 +1,7 @@
 # HTTP Server
 [server]
 Address = ":8200"
-ServerRoot = "public/resource/"
+ServerRoot = "public/"
 ServerAgent = "gfast-app"
 LogPath       = "./data/log/server"
 LogPathAgent  = "./data/log/agent"

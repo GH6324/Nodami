@@ -80,9 +80,6 @@ services:
     ports:
       - "1883:1883"   #tcp
     container_name: nodami-emqx
-    volumes:
-      - ./emqx/data:/opt/emqx/data
-      - ./emqx/log:/opt/emqx/log
     networks:
       - nodami
 
