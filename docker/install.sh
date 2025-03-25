@@ -103,7 +103,7 @@ install_nodami(){
   docker-compose up -d
 
   echo "🚀 正在启动 Nodami，请稍候..."
-  for i in {1..30}; do
+  for i in {1..120}; do
       if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/client/subscription | grep -q "200"; then
           echo -e "\n✅ Nodami 启动成功！"
           SERVER_IP=$(curl -s ifconfig.me)
@@ -113,7 +113,7 @@ install_nodami(){
           echo -e "⚠️ 请登录后立即修改默认密码，以确保安全。"
           return
       else
-          echo -ne "\r⏳ 等待 Nodami 启动中... ($i/30)"
+          echo -ne "\r⏳ 等待 Nodami 启动中... ($i s)"
           sleep 1
       fi
   done
