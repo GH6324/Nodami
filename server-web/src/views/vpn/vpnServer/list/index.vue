@@ -581,7 +581,7 @@ export default {
         serverSshUser: undefined,
         serverSshPasswrod: undefined,
         serverSshPublicKey: undefined,
-        serverSshLoginType: undefined,
+        serverSshLoginType: "1",
         up: undefined,
         down: undefined,
         other: undefined,

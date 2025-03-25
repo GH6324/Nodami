@@ -31,7 +31,7 @@ curl -fsSL https://raw.githubusercontent.com/YoyoCrafts/Nodami/refs/heads/nodami
 
 体验 Nodami 强大的节点管理能力：[演示地址](http://154.12.52.156:18080/)
 
-- **测试账号**: `demo`
+- **测试账号**: `admin`
 - **测试密码**: `123456`
 
 ---
