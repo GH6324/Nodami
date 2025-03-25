@@ -131,13 +131,22 @@ uninstall_nodami(){
   echo "✅ Nodami 已彻底卸载。"
 }
 
+reinstall_nodami(){
+  echo "❌ 正在卸载 Nodami..."
+  cd "$REPO_DIR/docker/bao" || exit
+  docker-compose down
+  rm -rf "$REPO_DIR/docker/bao/mysql"
+  install_nodami
+}
+
 # 主程序
 main() {
   if [ -d "$REPO_DIR/docker/bao" ]; then
       echo "⚠️ 检测到 Nodami 已经安装，请选择操作："
       echo "1) 重启 Nodami"
-      echo "2) 卸载 Nodami"
-      read -rp "请选择 [1-重启, 2-卸载]: " choice
+      echo "2) 重新安装 Nodami"
+      echo "3) 卸载 Nodami"
+      read -rp "请选择 [1-重启,2-重新安装, 3-卸载]: " choice
       case $choice in
           1)
               cd "$REPO_DIR/docker/bao" || exit
@@ -145,6 +154,9 @@ main() {
               echo "✅ Nodami 已重启完成。"
               ;;
           2)
+              reinstall_nodami
+              ;;
+          3)
               uninstall_nodami
               ;;
           *)
