@@ -12,7 +12,7 @@
               <span class="icon">📦</span> GitHub 仓库
             </a>
             <a href="https://t.me/Nodami" class="tg-link" target="_blank">
-              <span class="icon">💬</span> Telegram 交流群
+              <span class="icon">💬</span> Telegram 交流群 @Nodami
             </a>
           </div>
         </div>
