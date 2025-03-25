@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# 常量
+REPO_URL="https://github.com/YoyoCrafts/Nodami.git"
+REPO_DIR="/root/nodami"
+REPO_VERSION="v1.0.0"
+
+# 安装docker
+install_docker() {
+   echo "---> install_docker"
+
+   if ! [[ $(docker -v 2>/dev/null) ]]; then
+       echo "Docker 未安装，正在安装..."
+       curl -fsSL https://get.docker.com | bash
+       if ! command -v docker-compose >/dev/null 2>&1; then
+           echo "docker-compose 未安装，正在安装..."
+           sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+           chmod +x /usr/local/bin/docker-compose
+       fi
+
+       timedatectl set-timezone Asia/Shanghai
+       sudo systemctl enable docker
+       sudo systemctl restart docker
+       echo "---> Docker安装完成"
+  else
+    if systemctl is-active --quiet docker; then
+      echo "Docker is running."
+    else
+      echo "Docker is not running. Enabling and starting Docker..."
+      sudo systemctl enable docker && sudo systemctl restart docker
+    fi
+    echo "---> 你已经安装了Docker"
+  fi
+}
+
+# 检查Git是否安装
+check_git_installed() {
+    if ! command -v git &> /dev/null; then
+        echo "❌ Git 未安装，正在安装Git..."
+        if [ -x "$(command -v apt)" ]; then
+            sudo apt update && sudo apt install -y git
+        elif [ -x "$(command -v yum)" ]; then
+            sudo yum install -y git
+        else
+            echo "❌ 无法自动安装 Git，请手动安装。"
+            exit 1
+        fi
+    else
+        echo "✅ Git 已安装。"
+    fi
+}
+
+# 克隆或更新项目
+clone_or_update_repo() {
+    if [ ! -d "$REPO_DIR/.git" ]; then
+        echo "🚀 项目不存在，正在从 GitHub 克隆..."
+        git clone "$REPO_URL" "$REPO_DIR"
+        cd "$REPO_DIR" || exit
+    else
+        echo "🔄 项目已存在，检查版本是否最新..."
+        cd "$REPO_DIR" || exit
+        git fetch --tags
+    fi
+
+    CURRENT_VERSION=$(git describe --tags --abbrev=0)
+    if [ "$CURRENT_VERSION" != "$REPO_VERSION" ]; then
+        echo "⬆️ 当前版本($CURRENT_VERSION)与所需版本($REPO_VERSION)不符，正在切换版本..."
+        git checkout tags/"$REPO_VERSION" -b "$REPO_VERSION"
+    else
+        echo "✅ 项目已是最新所需版本($REPO_VERSION)。"
+    fi
+}
+
+# 安装 Nodami 并确认启动状态
+install_nodami(){
+  cd "$REPO_DIR/docker/bao" || exit
+  docker-compose up -d
+
+  echo "🚀 正在启动 Nodami，请稍候..."
+  for i in {1..30}; do
+      if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/client/subscription | grep -q "200"; then
+          echo "✅ Nodami 启动成功！"
+          SERVER_IP=$(curl -s ifconfig.me)
+          echo -e "\n🌐 后台地址：http://$SERVER_IP:18080"
+          echo -e "🔑 默认账号：admin"
+          echo -e "🔑 默认密码：123456"
+          echo -e "⚠️ 请登录后立即修改默认密码，以确保安全。"
+          return
+      else
+          echo -ne "\r⏳ 等待 Nodami 启动中... ($i/30)"
+          sleep 1
+      fi
+  done
+
+  echo "❌ Nodami 启动超时，请联系开发人员或在交流群中询问。"
+}
+
+# 卸载 Nodami
+uninstall_nodami(){
+  echo "❌ 正在卸载 Nodami..."
+  cd "$REPO_DIR/docker/bao" || exit
+  docker-compose down
+  docker system prune -af
+  rm -rf "$REPO_DIR"
+  echo "✅ Nodami 已彻底卸载。"
+}
+
+# 主程序
+main() {
+  if [ -d "$REPO_DIR/docker/bao" ]; then
+      echo "⚠️ 检测到 Nodami 已经安装，请选择操作："
+      echo "1) 重启 Nodami"
+      echo "2) 卸载 Nodami"
+      read -rp "请选择 [1-重启, 2-卸载]: " choice
+      case $choice in
+          1)
+              cd "$REPO_DIR/docker/bao" || exit
+              docker-compose restart
+              echo "✅ Nodami 已重启完成。"
+              ;;
+          2)
+              uninstall_nodami
+              ;;
+          *)
+              echo "❌ 输入无效，脚本终止。"
+              exit 1
+              ;;
+      esac
+  else
+      check_git_installed
+      clone_or_update_repo
+      install_docker
+      install_nodami
+  fi
+}
+
+# 执行主程序
+main

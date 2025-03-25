@@ -1,0 +1,94 @@
+version: '3'
+
+services:
+
+  nodami-server:
+    build:
+      context: .
+      dockerfile: ./nodami-server/Dockerfile
+    container_name: nodami-server
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./nodami-server:/app
+    depends_on:
+      - nodami-mysql
+      - nodami-redis
+      - nodami-emqx
+    networks:
+      - nodami
+  nodami-mysql:
+    image: mysql:8.0
+    restart: always
+    container_name: nodami-mysql
+    command: --max-connections=3000 --skip-log-bin --expire-logs-days=7 --max-binlog-size=104857600 --sql-mode=""
+    environment:
+      MYSQL_ROOT_PASSWORD: werhhn!#sdERTY23412
+      MYSQL_DATABASE: nodami-server
+      MYSQL_USER: nodami-server
+      MYSQL_PASSWORD: w324hn!#sdERTY23412
+#    ports:
+#      - "3306:3306"
+    volumes:
+      - ./mysql/:/var/lib/mysql/
+      - ./nodami-server/Nodami.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nodami
+  nodami-redis:
+    image: redis:latest
+    restart: always
+    container_name: nodami-redis
+    networks:
+      - nodami
+#    ports:
+#      - "6379:6379"
+  nodami-nginx:
+    image: nginx:latest
+    container_name: nodami-nginx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "18080:80"
+    volumes:
+      - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf/proxy_headers.conf:/etc/nginx/proxy_headers.conf
+      - ./nginx/wwwroot:/wwwroot
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - nodami
+
+  #mqtt
+  nodami-emqx:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    image: emqx/emqx:latest
+    restart: always
+    ports:
+      - "1883:1883"   #tcp
+    container_name: nodami-emqx
+    volumes:
+      - ./emqx/data:/opt/emqx/data
+      - ./emqx/log:/opt/emqx/log
+    networks:
+      - nodami
+
+
+networks:
+  nodami:
+
+
+

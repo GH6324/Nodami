@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+
+
+package speed;
+option  go_package = "./commonInfo";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.protobuf";
+option java_outer_classname = "ProtobufProto";
+
+//  protoc --go_out=. --go-grpc_out=. speed.proto
+
+
+
+service ClashSpeed {
+  rpc SpeedTest(Proxie) returns (Response) {}
+  rpc URLTest(Proxie) returns (Response) {}
+}
+
+
+
+message Response {
+  int32 res = 1;
+}
+
+
+message Proxie {
+  string proxies = 1;
+  string groups = 2;
+  string url = 3;
+}
+

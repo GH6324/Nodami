@@ -1,0 +1,105 @@
+# HTTP Server
+[server]
+Address = ":8200"
+ServerRoot = "public/"
+ServerAgent = "gfast-app"
+LogPath       = "./data/log/server"
+LogPathAgent  = "./data/log/agent"
+logStdout = true                # 日志是否输出到终端。默认为true
+errorStack = true               # 当Server捕获到异常时是否记录堆栈信息到日志中。默认为true
+errorLogPattern = "error-{Ymd}.log"  # 异常错误日志文件格式。默认为"error-{Ymd}.log"
+accessLogPattern = "access-{Ymd}.log" # 访问日志文件格式。默认为"access-{Ymd}.log"
+DumpRouterMap = false
+NameToUriType = 3
+maxHeaderBytes = "20KB"
+clientMaxBodySize = "200MB"
+accessLogEnabled = false                 # 是否记录访问日志。默认为false
+errorLogEnabled = true                  # 是否记录异常日志信息到日志中。默认为true
+PProfEnabled = false                 # 是否开启PProf性能调试特性。默认为false
+debug = false                  # 是否是调试模式
+readTimeout = "180s"                # 响应超时 3分钟
+
+[mqtt]
+server = "tcp://10.211.55.13:508"
+user=""
+pass=""
+
+# Logger.
+[logger]
+Path = "./data/log/logger"
+Level = "info"
+Stdout = true
+
+# Template.
+[viewer]
+paths = ["./template"]
+defaultFile = "index.html"
+delimiters = ["${", "}"]
+
+# Database.
+[database]
+Link = "mysql:root:werhhn!#sdERTY23412@tcp(127.0.0.1:3306)/nodami-server"
+#Link = "mysql:root:123456@tcp(10.211.55.13:3306)/vpnmanager"
+charset = "utf8mb4" #数据库编码
+debug   = true
+dryRun = false #空跑
+maxIdle = "10" #连接池最大闲置的连接数
+maxOpen = "300" #连接池最大打开的连接数
+maxLifetime = "30" #(单位秒)连接对象可重复使用的时间长度
+# Database logger.
+[database.logger]
+Path   = "./data/log/sql"
+Level  = "error"
+Stdout = true
+
+# Redis数据库配置
+[redis]
+open = true #是否开启 redis 缓存 若不开启使用gchache缓存方式
+default = "10.211.55.13:6379,2?idleTimeout=20&maxActive=100"
+
+#jwt配置
+[gToken]
+[gToken.system]
+CacheMode = 2
+CacheKey = "GToken:"
+Timeout = 10800000 #3个小时
+MaxRefresh = 0
+TokenDelimiter = "_"
+EncryptKey = "koi29a83idakguqjq29asd9asd8a7jhq"
+AuthFailMsg = "登录超时，请重新登录"
+MultiLogin = true  #后台是否允许多端同时在线
+
+
+[system]
+notCheckAuthAdminIds = [1, 2, 31]  #无需验证后台权限的用户id
+dataDir = "./data"
+
+
+
+#casbin配置
+[casbin]
+modelFile = "./config/casbin_conf/rbac_model.conf"
+policyFile = "./config/casbin_conf/rbac_policy.csv"
+
+
+# Gen
+[gen]
+author = "gfast"
+moduleName = "system"
+packageName = "gfast/app/system"
+autoRemovePre = true   #是否自动删除表前缀
+tablePrefix = "table_,qxkj_"   #表前缀
+templatePath = "./template/vm"  #代码生成模板路径
+frontDir = "../server-web" #前端路径
+
+# 上传配置
+[upload]
+type = "local"
+
+
+# 插件管理
+[plugin]
+serverUrl = "https://plugins.g-fast.cn"  #获取插件商城插件列表
+
+
+
