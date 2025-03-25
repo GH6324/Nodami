@@ -146,7 +146,7 @@ main() {
       echo "1) 重启 Nodami"
       echo "2) 重新安装 Nodami"
       echo "3) 卸载 Nodami"
-      read -rp "请选择 [1-重启,2-重新安装, 3-卸载]: " choice
+      read -rp "请选择 [1-重启,2-重新安装,3-卸载]: " choice
       case $choice in
           1)
               cd "$REPO_DIR/docker/bao" || exit
