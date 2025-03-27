@@ -36,7 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/YoyoCrafts/Nodami/refs/heads/nodami
 
 ---
 
-## 🎯 在线 Demo 地址
+## 🎯 在线演示后台
 
 体验 Nodami 强大的节点管理能力：[演示地址](http://154.12.52.156:18080/)
 
