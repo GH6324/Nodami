@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : 192.168.100.166
+ Source Server         : 本地
  Source Server Type    : MySQL
  Source Server Version : 80041 (8.0.41)
- Source Host           : 192.168.100.166:3306
- Source Schema         : nodami-server
+ Source Host           : 127.0.0.1:3306
+ Source Schema         : vpnmanager
 
  Target Server Type    : MySQL
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 25/03/2025 16:44:23
+ Date: 27/03/2025 19:09:52
 */
 
 SET NAMES utf8mb4;
@@ -959,7 +959,7 @@ CREATE TABLE `sys_login_log` (
   `login_time` datetime DEFAULT NULL COMMENT '登录时间',
   `module` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '登录模块',
   PRIMARY KEY (`info_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='系统访问记录';
 
 -- ----------------------------
 -- Records of sys_login_log
@@ -1031,12 +1031,30 @@ CREATE TABLE `sys_oper_log` (
   `error_msg` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '错误消息',
   `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
   PRIMARY KEY (`oper_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=68861 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='操作日志记录';
+) ENGINE=InnoDB AUTO_INCREMENT=68778 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='操作日志记录';
 
 -- ----------------------------
 -- Records of sys_oper_log
 -- ----------------------------
 BEGIN;
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68760, '', 0, '/system/user/getInfo', 'GET', 1, 'admin', '深圳总公司', '/system/user/getInfo', '127.0.0.1', '内网IP', '{}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68761, '', 0, '/system/user/getRouters', 'GET', 1, 'admin', '深圳总公司', '/system/user/getRouters', '127.0.0.1', '内网IP', '{}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68762, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=isonoroff&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"isonoroff\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68763, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=vpn_status&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"vpn_status\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68764, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=frpprotocol&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"frpprotocol\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68765, '地区列表', 0, '/vpn/vpnNodeNation/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnNodeNation/list?pageSize=10000', '127.0.0.1', '内网IP', '{\"pageSize\":\"10000\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68766, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=method&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"method\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68767, '服务器管理', 0, '/vpn/vpnServer/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnServer/list?pageSize=10000', '127.0.0.1', '内网IP', '{\"pageSize\":\"10000\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68768, '节点列表', 0, '/vpn/vpnNode/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnNode/list?pageNum=1&pageSize=10&orderBy=vpn_node.nation_id+desc,vpn_node.node_id+desc', '127.0.0.1', '内网IP', '{\"orderBy\":\"vpn_node.nation_id desc,vpn_node.node_id desc\",\"pageNum\":\"1\",\"pageSize\":\"10\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68769, '服务器管理', 0, '/vpn/vpnServer/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnServer/list?pageSize=10&orderBy=vpn_server.server_group_id+desc,vpn_server.server_group_id+desc&search=&pageNum=1', '127.0.0.1', '内网IP', '{\"orderBy\":\"vpn_server.server_group_id desc,vpn_server.server_group_id desc\",\"pageNum\":\"1\",\"pageSize\":\"10\",\"search\":\"\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68770, '服务器管理', 0, '/vpn/vpnServer/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnServer/list?pageSize=10000', '127.0.0.1', '内网IP', '{\"pageSize\":\"10000\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68771, '服务器管理', 0, '/vpn/vpnServer/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnServer/list?pageSize=10000', '127.0.0.1', '内网IP', '{\"pageSize\":\"10000\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:29');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68772, '', 0, '/system/dashboard/info', 'GET', 1, 'admin', '深圳总公司', '/system/dashboard/info', '127.0.0.1', '内网IP', '{}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:32');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68773, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=sshLoginType&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"sshLoginType\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:34');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68774, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=vpn_status&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"vpn_status\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:34');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68775, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=isokrono&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"isokrono\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:34');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68776, '', 0, '/system/config/dict/data/GetDictData', 'GET', 1, 'admin', '深圳总公司', '/system/config/dict/data/GetDictData?dictType=shifouzhici&defaultValue=', '127.0.0.1', '内网IP', '{\"defaultValue\":\"\",\"dictType\":\"shifouzhici\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:34');
+INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`) VALUES (68777, '服务器管理', 0, '/vpn/vpnServer/list', 'GET', 1, 'admin', '深圳总公司', '/vpn/vpnServer/list?pageNum=1&pageSize=10', '127.0.0.1', '内网IP', '{\"pageNum\":\"1\",\"pageSize\":\"10\"}', '{\"code\":0,\"msg\":\"success\"}', 1, '', '2025-03-25 15:40:34');
 COMMIT;
 
 -- ----------------------------
@@ -1148,7 +1166,11 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`id`, `user_name`, `mobile`, `user_nickname`, `birthday`, `user_password`, `user_salt`, `user_status`, `user_email`, `sex`, `avatar`, `dept_id`, `remark`, `is_admin`, `address`, `describe`, `phone_num`, `last_login_ip`, `last_login_time`, `created_at`, `updated_at`, `deleted_at`) VALUES (1, 'admin', '13578342363', '超级管理员', 0, '11ad4c7cb1f149d0bda3e95fcb735a6b', 'upSPn8AQLB', 1, 'aaaaa@qq.com', 1, 'https://yxh-1301841944.cos.ap-chongqing.myqcloud.com/gfast/2021-07-19/ccwpeuqz1i2s769hua.jpeg', 101, '', 1, 'asdasfdsaf大发放打发士大夫发按时', '描述信息', '18611111111', '192.168.65.1', '2025-03-25 16:34:38', '2021-06-22 17:58:00', '2024-10-19 11:46:37', NULL);
+INSERT INTO `sys_user` (`id`, `user_name`, `mobile`, `user_nickname`, `birthday`, `user_password`, `user_salt`, `user_status`, `user_email`, `sex`, `avatar`, `dept_id`, `remark`, `is_admin`, `address`, `describe`, `phone_num`, `last_login_ip`, `last_login_time`, `created_at`, `updated_at`, `deleted_at`) VALUES (1, 'admin', '13578342363', '超级管理员', 0, 'd2869e355bde4832d1c9cdd3388300e2', 'KdfHn13SO3', 1, 'aaaaa@qq.com', 1, 'https://yxh-1301841944.cos.ap-chongqing.myqcloud.com/gfast/2021-07-19/ccwpeuqz1i2s769hua.jpeg', 101, '', 1, 'asdasfdsaf大发放打发士大夫发按时', '描述信息', '18611111111', '127.0.0.1', '2025-03-27 17:51:59', '2021-06-22 17:58:00', '2024-10-19 11:46:37', NULL);
+INSERT INTO `sys_user` (`id`, `user_name`, `mobile`, `user_nickname`, `birthday`, `user_password`, `user_salt`, `user_status`, `user_email`, `sex`, `avatar`, `dept_id`, `remark`, `is_admin`, `address`, `describe`, `phone_num`, `last_login_ip`, `last_login_time`, `created_at`, `updated_at`, `deleted_at`) VALUES (42, 'ceshi', '', 'ceshi', 0, 'cf8bf73a4de7d8d194fb99793ff56dd0', 'UH3cmEVshx', 1, 'ceshi@qq.com', 0, '', 0, '', 0, '', '', '', '', NULL, '2023-10-06 20:10:51', '2023-10-06 20:10:51', '2023-10-06 20:11:00');
+INSERT INTO `sys_user` (`id`, `user_name`, `mobile`, `user_nickname`, `birthday`, `user_password`, `user_salt`, `user_status`, `user_email`, `sex`, `avatar`, `dept_id`, `remark`, `is_admin`, `address`, `describe`, `phone_num`, `last_login_ip`, `last_login_time`, `created_at`, `updated_at`, `deleted_at`) VALUES (49, 'vlinkadmin', '', '管理员', 0, 'f7359c48781458e5d390ba59240b8bba', 'w4qTqV1aNa', 1, 'vlink@gmail.com', 0, '', 0, '', 1, '', '', '', '91.149.202.201', '2024-03-29 10:55:06', '2023-12-18 18:32:05', '2023-12-18 18:32:05', '2024-03-30 21:33:59');
+INSERT INTO `sys_user` (`id`, `user_name`, `mobile`, `user_nickname`, `birthday`, `user_password`, `user_salt`, `user_status`, `user_email`, `sex`, `avatar`, `dept_id`, `remark`, `is_admin`, `address`, `describe`, `phone_num`, `last_login_ip`, `last_login_time`, `created_at`, `updated_at`, `deleted_at`) VALUES (50, 'heiqi123', '', 'heiqi', 0, '108e52bb5e86da39142cb45209fd232f', 'l7xCRMceu4', 1, 'heiqi@gmail.com', 0, '', 0, '', 1, '', '', '', '194.135.104.76', '2024-04-01 10:26:42', '2024-04-01 10:23:42', '2024-04-01 10:23:42', '2024-04-01 20:49:49');
+INSERT INTO `sys_user` (`id`, `user_name`, `mobile`, `user_nickname`, `birthday`, `user_password`, `user_salt`, `user_status`, `user_email`, `sex`, `avatar`, `dept_id`, `remark`, `is_admin`, `address`, `describe`, `phone_num`, `last_login_ip`, `last_login_time`, `created_at`, `updated_at`, `deleted_at`) VALUES (51, 'MINIXIONG', '', '小熊', 0, '4dc32214196c870eb8b31847ea2869d0', 'mAHgigT2Ih', 1, '1123@qq.com', 0, '', 0, '', 1, '', '', '', '202.190.254.113', '2024-06-17 20:59:02', '2024-04-01 20:51:52', '2024-10-19 11:46:33', '2025-03-24 21:09:09');
 COMMIT;
 
 -- ----------------------------
@@ -1172,7 +1194,7 @@ CREATE TABLE `sys_user_online` (
 -- Records of sys_user_online
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user_online` (`id`, `uuid`, `token`, `create_time`, `user_name`, `ip`, `explorer`, `os`) VALUES (17497, '83d67191af9daba43a7d2d50c6183519', 'jbYKl72cbOGvbVRwIqM4r6eoirw8f1JRD44+4D5E/UQq9Hwq6KTCvr5/l9fWNIQAYXrAKyLLCFVS4T2c2kNfGoIGldO8SWxkRwVqkGcFiT9z+Z/s6uFk/xinWe7YbBvRKPbihM6JvH6D2jKKHHWMKw==', '2025-03-25 16:34:38', 'admin', '192.168.65.1', 'Chrome', 'Intel Mac OS X 10_15_7');
+INSERT INTO `sys_user_online` (`id`, `uuid`, `token`, `create_time`, `user_name`, `ip`, `explorer`, `os`) VALUES (17497, '5ed97ec4198b2b5070fc153221bab047', 'jbYKl72cbOGvbVRwIqM4r6eoirw8f1JRD44+4D5E/UTsnPCQiEgYafAoLsaXK8d30xdmZL7dRdNmLYPn5F7KB0FFm2Fguahev0x4DollTSgi/9qOggMDxYuVLUzZ6WB7izlMVSNKm9AN3EnSUABlhA==', '2025-03-27 17:51:59', 'admin', '127.0.0.1', 'Chrome', 'Intel Mac OS X 10_15_7');
 COMMIT;
 
 -- ----------------------------
@@ -1663,9 +1685,6 @@ CREATE TABLE `vpn_node` (
   `out_node_id` int DEFAULT NULL COMMENT '出口节点ID',
   `protocol` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '协议',
   `vpn_port` int DEFAULT NULL COMMENT 'vpn端口',
-  `ws` int DEFAULT NULL COMMENT '使用传输协议',
-  `ws_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'ws路径',
-  `host` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'host',
   `ping` json NOT NULL COMMENT 'ping数据',
   `method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '加密方式',
   `frp_protocol` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '内网穿透协议',
@@ -1680,6 +1699,11 @@ CREATE TABLE `vpn_node` (
   `created_at` datetime DEFAULT NULL COMMENT '创建时间',
   `updated_at` datetime DEFAULT NULL COMMENT '更新时间',
   `clash_proxie` json DEFAULT NULL,
+  `transport_protocol` varchar(255) DEFAULT NULL,
+  `stream_settings_host` varchar(255) DEFAULT NULL,
+  `stream_settings_path` varchar(255) DEFAULT NULL,
+  `stream_settings_service_name` varchar(255) DEFAULT NULL,
+  `stream_settings_reality` int DEFAULT NULL,
   PRIMARY KEY (`node_id`) USING BTREE,
   UNIQUE KEY `idx_vpn_node_node_id` (`node_id`) USING BTREE,
   KEY `idx_transit_server_protocol` (`transit_server_id`,`transit_protocol`) USING BTREE,
@@ -1690,7 +1714,7 @@ CREATE TABLE `vpn_node` (
   KEY `idx_server_id_node_id_group_id` (`server_id`,`node_id`) USING BTREE,
   KEY `idx_vpn_node_transit_hysteria_server_id_protocol` (`transit_hysteria_server_id`,`transit_protocol`) USING BTREE,
   KEY `idx_vpn_node_server_id` (`server_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=5295 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Vpn节点配置';
+) ENGINE=InnoDB AUTO_INCREMENT=5302 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Vpn节点配置';
 
 -- ----------------------------
 -- Records of vpn_node
@@ -1756,7 +1780,7 @@ CREATE TABLE `vpn_node_ping` (
 -- Records of vpn_node_ping
 -- ----------------------------
 BEGIN;
-INSERT INTO `vpn_node_ping` (`ping_id`, `server_id`, `nation_name`, `ping_url`, `speed_url`) VALUES (1, 835, '香港', 'http://127.0.0.1:2061/generate_204', 'http://127.0.0.1:2061/speed_test?byte=5024000');
+INSERT INTO `vpn_node_ping` (`ping_id`, `server_id`, `nation_name`, `ping_url`, `speed_url`) VALUES (1, 837, '测试', 'http://127.0.0.1:2061/generate_204', 'http://127.0.0.1:2061/speed_test?byte=5024000');
 COMMIT;
 
 -- ----------------------------
@@ -1781,8 +1805,6 @@ CREATE TABLE `vpn_node_transfer` (
 -- Records of vpn_node_transfer
 -- ----------------------------
 BEGIN;
-INSERT INTO `vpn_node_transfer` (`transfer_id`, `node_id`, `entrance_server_id`, `entrance_server_ip`, `exit_server_id`, `exit_server_ip`) VALUES (173, 5294, 835, '127.0.0.1', 836, '156.226.174.214');
-INSERT INTO `vpn_node_transfer` (`transfer_id`, `node_id`, `entrance_server_id`, `entrance_server_ip`, `exit_server_id`, `exit_server_ip`) VALUES (174, 5294, 836, '156.226.174.214', 837, '45.39.198.85');
 COMMIT;
 
 -- ----------------------------
@@ -1828,6 +1850,8 @@ CREATE TABLE `vpn_server` (
 -- Records of vpn_server
 -- ----------------------------
 BEGIN;
+INSERT INTO `vpn_server` (`server_id`, `server_name`, `server_ip`, `server_group_id`, `service_merchants_id`, `server_ssh_prot`, `server_ssh_user`, `server_ssh_passwrod`, `server_ssh_public_key`, `server_ssh_login_type`, `nation_id`, `status`, `up`, `down`, `other`, `is_pppoe`, `pppoe_restart`, `pppoe_hour`, `pppoe_cycle`, `pppoe_retime`, `real_up`, `real_down`, `ipv6`, `real_cpu`, `real_disk`, `real_mem`, `server_dns`, `proxy_addr`, `updated_at`, `created_at`) VALUES (836, '测试1', '156.226.174.214', 8, 2, 22, 'root', 'XU2*M88cYPyaiOyGFw', '', 'password', 25, -1, 576367292, 1415292157, '', '-1', -1, 0, 0, NULL, 1655, 832, -1, 0.48, 21.11, 13.54, '', '', '2025-03-27 19:09:50', '2025-02-20 21:48:54');
+INSERT INTO `vpn_server` (`server_id`, `server_name`, `server_ip`, `server_group_id`, `service_merchants_id`, `server_ssh_prot`, `server_ssh_user`, `server_ssh_passwrod`, `server_ssh_public_key`, `server_ssh_login_type`, `nation_id`, `status`, `up`, `down`, `other`, `is_pppoe`, `pppoe_restart`, `pppoe_hour`, `pppoe_cycle`, `pppoe_retime`, `real_up`, `real_down`, `ipv6`, `real_cpu`, `real_disk`, `real_mem`, `server_dns`, `proxy_addr`, `updated_at`, `created_at`) VALUES (837, '测试2', '45.39.198.85', 8, 0, 22, 'root', 'N6E@ZJyuk*U1XCxWaQ', '', 'password', 25, -1, 50808804, 420897944, '', '-1', -1, 0, 0, NULL, 0, 6546, -1, 0.00, 27.07, 13.77, '', '', '2025-03-27 19:09:50', '2025-02-20 21:49:25');
 COMMIT;
 
 -- ----------------------------
@@ -1844,7 +1868,7 @@ CREATE TABLE `vpn_server_group` (
 -- Records of vpn_server_group
 -- ----------------------------
 BEGIN;
-INSERT INTO `vpn_server_group` (`server_group_id`, `server_group_name`) VALUES (9, '测速服务器');
+INSERT INTO `vpn_server_group` (`server_group_id`, `server_group_name`) VALUES (8, '测试服务器');
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
