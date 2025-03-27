@@ -71,7 +71,7 @@ setDNS(){
 }
 
 downAgent() {
-  AGETN_NAME="agent_sing_box.zip?v1.0.1"
+  AGETN_NAME="agent_sing_box.zip?v1.0.1.0"
   ZIP_FILE="$PWD/$AGETN_NAME"
   ZIP_FILE_BASE=$(basename "$ZIP_FILE")
   find "$PWD" -maxdepth 1 -type f \( -name "*.zip*" -o -name "*.zip?*" \) ! -name "$ZIP_FILE_BASE" -exec rm -f {} \;
