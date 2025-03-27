@@ -9,7 +9,10 @@ import (
 	"gfast/app/vpn/dao"
 	"gfast/app/vpn/model"
 	"gfast/cache"
+	"gfast/library"
 	"github.com/gogf/gf/frame/g"
+	"math/rand"
+	"time"
 )
 
 type vpnNodeService struct {
@@ -93,6 +96,37 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxi
 			SkipCertVerify: true,
 		}
 
+		if node.TransportProtocol != "" && (node.Protocol == commonInfo.Protocol_VMess || node.Protocol == commonInfo.Protocol_VLess || node.Protocol == commonInfo.Protocol_Trojan) {
+
+			proxie.TLS = true
+			proxie.ClientFingerprint = "chrome"
+			proxie.ServerName = node.StreamSettingsHost
+			proxie.Sni = node.StreamSettingsHost
+
+			if node.TransportProtocol == "websocket" {
+				proxie.Network = "ws"
+				proxie.WsOpts = &dao.WsOpts{}
+				proxie.WsOpts.Path = node.StreamSettingsPath
+				proxie.WsOpts.Headers = map[string]interface{}{
+					"Host": node.StreamSettingsHost,
+				}
+			}
+
+			if node.TransportProtocol == "grpc" {
+				proxie.Network = "grpc"
+				proxie.GrpcOpts = &dao.GrpcOpts{
+					GrpcServiceName: node.StreamSettingsServiceName,
+				}
+
+				if node.StreamSettingsReality == 1 && node.Protocol != commonInfo.Protocol_VMess {
+					proxie.RealityOpts = &dao.RealityOpts{
+						PublicKey: library.Settings.Peality.Public,
+						ShortId:   library.Settings.Peality.ShortIds[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(library.Settings.Peality.ShortIds))],
+					}
+				}
+			}
+		}
+
 		mationNameMap := make(map[string]string)
 		r := json.Unmarshal([]byte(node.NationName), &mationNameMap)
 		if r == nil {
@@ -111,27 +145,23 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxi
 			proxie.Port = node.TransitPort
 		}
 
-		pass := global.Settings.Agent.CommonUUID
+		pass := library.Settings.Agent.CommonUUID
 		if node.Protocol == commonInfo.Protocol_VMess {
 			alterID := 0
 			proxie.AlterID = &alterID
 			proxie.Type = "vmess"
 			proxie.Cipher = "auto"
 			proxie.UUID = pass
-			proxie.TLS = false
+		}
 
-			if node.Ws == 1 {
-				proxie.UDP = false
-				proxie.Network = "ws"
-				wsPath := node.WsPath
-				if len(wsPath) > 0 && wsPath[0] == '/' {
-					wsPath = wsPath[1:]
-				}
+		if node.Protocol == commonInfo.Protocol_VLess {
+			proxie.Type = "vless"
+			proxie.UUID = pass
+		}
 
-				proxie.WsOpts = &dao.WsOpts{}
-				proxie.WsOpts.Path = "/" + wsPath
-
-			}
+		if node.Protocol == commonInfo.Protocol_Trojan {
+			proxie.Type = "trojan"
+			proxie.Password = pass
 		}
 
 		if node.Protocol == commonInfo.Protocol_Shadowsocks {
@@ -139,18 +169,6 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxi
 			proxie.Cipher = node.Method
 			proxie.Password = commonInfo.ShadowsocksPass(proxie.Cipher, pass)
 
-			if node.Ws == 1 {
-				proxie.UDP = false
-				proxie.Network = "ws"
-				wsPath := node.WsPath
-				if len(wsPath) > 0 && wsPath[0] == '/' {
-					wsPath = wsPath[1:]
-				}
-
-				proxie.WsOpts = &dao.WsOpts{}
-				proxie.WsOpts.Path = "/" + wsPath
-
-			}
 		}
 
 		if node.Protocol == commonInfo.Protocol_Socks {

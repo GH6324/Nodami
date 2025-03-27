@@ -517,7 +517,7 @@ func (x *server) run() {
         echo "Unsupported OS. Please install curl manually." && exit 1;
     fi;
     }`, isSudo, isSudo, isSudo)
-	agentDomCmd := fmt.Sprintf(`curl -o start.sh %s/agent/install/agent/%d?%d`, global.GetAgentAPI(), x.Id, time.Now().Unix())
+	agentDomCmd := fmt.Sprintf(`curl -o start.sh %s/agent/install/agent/%d?%d`, library.GetAgentAPI(), x.Id, time.Now().Unix())
 
 	cmdString := fmt.Sprintf(`%s && %s && %s && %s chmod +x start.sh && %s ./start.sh`, dnsCmd, curlInstallCmd, agentDomCmd, isSudo, isSudo)
 

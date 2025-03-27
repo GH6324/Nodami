@@ -14,6 +14,7 @@ import (
 	commonService "gfast/app/common/service"
 	"gfast/app/system/dao"
 	"gfast/app/system/model"
+	"gfast/library"
 	"github.com/gogf/gf/database/gdb"
 	"github.com/gogf/gf/frame/g"
 	"github.com/gogf/gf/util/gconv"
@@ -29,7 +30,8 @@ func init() {
 	if err != nil {
 		g.Log().Panic(err.Error())
 	}
-	err = global.SetSettings([]byte(data.WebContent))
+
+	err = library.SetSettings([]byte(data.WebContent))
 	if err != nil {
 		g.Log().Panic(err.Error())
 	}
@@ -71,7 +73,7 @@ func (s *sysWebSet) UpdateSave(req *model.SysWebSetUpdateReq) (err error) {
 			return err
 		}
 
-		return global.SetSettings(jsonData)
+		return library.SetSettings(jsonData)
 
 	})
 

@@ -164,18 +164,21 @@ func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId i
 		if isSameServer && isDefaultTransit {
 
 			nodesConfig := commonInfo.NodesConfig{
-				NodeId:            int32(v.NodeId),
-				ServerId:          int32(v.ServerId),
-				OutIp:             v.OutIp,
-				Ws:                v.Ws == 1,
-				WsPath:            v.WsPath,
-				Protocol:          v.Protocol,
-				Method:            v.Method,
-				NodeServerIp:      v.ServerIp,
-				NodeServerPort:    v.VpnPort,
-				TransitServerPort: v.TransitPort,
-				FrpServerIp:       v.FrpServerIp,
-				FrpServerPort:     v.FrpPort,
+				NodeId:                    int32(v.NodeId),
+				ServerId:                  int32(v.ServerId),
+				OutIp:                     v.OutIp,
+				TransportProtocol:         v.TransportProtocol,
+				StreamSettingsHost:        v.StreamSettingsHost,
+				StreamSettingsPath:        v.StreamSettingsPath,
+				StreamSettingsServiceName: v.StreamSettingsServiceName,
+				StreamSettingsReality:     v.StreamSettingsReality,
+				Protocol:                  v.Protocol,
+				Method:                    v.Method,
+				NodeServerIp:              v.ServerIp,
+				NodeServerPort:            v.VpnPort,
+				TransitServerPort:         v.TransitPort,
+				FrpServerIp:               v.FrpServerIp,
+				FrpServerPort:             v.FrpPort,
 			}
 
 			nodesRes.SingBoxNodes = append(nodesRes.SingBoxNodes, nodesConfig)
@@ -204,14 +207,17 @@ func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId i
 
 					if ii == 0 {
 						nodesConfig := commonInfo.NodesConfig{
-							NodeId:         int32(v.NodeId),
-							ServerId:       int32(v.ServerId),
-							Ws:             v.Ws == 1,
-							WsPath:         v.WsPath,
-							Protocol:       v.Protocol,
-							Method:         v.Method,
-							NodeServerIp:   v.ServerIp,
-							NodeServerPort: v.TransitPort,
+							NodeId:                    int32(v.NodeId),
+							ServerId:                  int32(v.ServerId),
+							TransportProtocol:         v.TransportProtocol,
+							StreamSettingsHost:        v.StreamSettingsHost,
+							StreamSettingsPath:        v.StreamSettingsPath,
+							StreamSettingsServiceName: v.StreamSettingsServiceName,
+							StreamSettingsReality:     v.StreamSettingsReality,
+							Protocol:                  v.Protocol,
+							Method:                    v.Method,
+							NodeServerIp:              v.ServerIp,
+							NodeServerPort:            v.TransitPort,
 						}
 
 						nodesRes.SingBoxNodes = append(nodesRes.SingBoxNodes, nodesConfig)

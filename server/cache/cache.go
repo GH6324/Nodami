@@ -16,13 +16,13 @@ type Value struct {
 	V interface{} `json:"v"`
 }
 
-func Set(key string, obj interface{}, expireTime int) {
+func Set(key string, obj interface{}, expireTime ...int) {
 	value := Value{
 		V: obj,
 	}
 	b, _ := json.Marshal(&value)
 
-	set(key, string(b), expireTime)
+	set(key, string(b), expireTime...)
 }
 
 func Get(key string) interface{} {
@@ -123,13 +123,13 @@ func GetStringMapStringSlice(key string) map[string][]string {
 	return cast.ToStringMapStringSlice(Get(key))
 }
 
-func set(key string, value string, expireTime int) {
+func set(key string, value string, expireTime ...int) {
 
 	cache := service.Cache.New()
-	if expireTime == 0 {
-		cache.Set(key, value, 0)
+	if expireTime != nil && len(expireTime) > 0 {
+		cache.Set(key, value, time.Duration(expireTime[0])*time.Second)
 	} else {
-		cache.Set(key, value, time.Duration(expireTime)*time.Second)
+		cache.Set(key, value, 0)
 	}
 
 }

@@ -60,22 +60,24 @@ func (c *vpnNode) Add(r *ghttp.Request) {
 	}
 
 	vpnNodeModel := model.VpnNode{
-		ServerId:        req.ServerId,
-		TransitPort:     req.TransitPort,
-		TransitProtocol: req.TransitProtocol,
-		Protocol:        req.Protocol,
-		OtuType:         req.OtuType,
-		OutIp:           req.OutIp,
-		NationId:        req.NationId,
-		VpnPort:         req.VpnPort,
-		Ws:              req.Ws,
-		WsPath:          req.WsPath,
-		Host:            req.Host,
-		Method:          req.Method,
-		FrpServerId:     req.FrpServerId,
-		FrpProtocol:     req.FrpProtocol,
-		FrpPort:         req.FrpPort,
-		Other:           req.Other,
+		ServerId:                  req.ServerId,
+		TransitPort:               req.TransitPort,
+		TransitProtocol:           req.TransitProtocol,
+		Protocol:                  req.Protocol,
+		OtuType:                   req.OtuType,
+		OutIp:                     req.OutIp,
+		NationId:                  req.NationId,
+		VpnPort:                   req.VpnPort,
+		TransportProtocol:         req.TransportProtocol,
+		StreamSettingsHost:        req.StreamSettingsHost,
+		StreamSettingsPath:        req.StreamSettingsPath,
+		StreamSettingsServiceName: req.StreamSettingsServiceName,
+		Method:                    req.Method,
+		FrpServerId:               req.FrpServerId,
+		FrpProtocol:               req.FrpProtocol,
+		FrpPort:                   req.FrpPort,
+		Other:                     req.Other,
+		StreamSettingsReality:     req.StreamSettingsReality,
 	}
 
 	if req.AddType == 0 {
@@ -164,23 +166,25 @@ func (c *vpnNode) Edit(r *ghttp.Request) {
 		c.FailJsonExit(r, err.(gvalid.Error).FirstString())
 	}
 	vpnNodeModel := model.VpnNode{
-		NodeId:          req.NodeId,
-		ServerId:        req.ServerId,
-		TransitPort:     req.TransitPort,
-		TransitProtocol: req.TransitProtocol,
-		Protocol:        req.Protocol,
-		OtuType:         req.OtuType,
-		OutIp:           req.OutIp,
-		NationId:        req.NationId,
-		VpnPort:         req.VpnPort,
-		Ws:              req.Ws,
-		WsPath:          req.WsPath,
-		Host:            req.Host,
-		Method:          req.Method,
-		FrpServerId:     req.FrpServerId,
-		FrpProtocol:     req.FrpProtocol,
-		FrpPort:         req.FrpPort,
-		Other:           req.Other,
+		NodeId:                    req.NodeId,
+		ServerId:                  req.ServerId,
+		TransitPort:               req.TransitPort,
+		TransitProtocol:           req.TransitProtocol,
+		Protocol:                  req.Protocol,
+		OtuType:                   req.OtuType,
+		OutIp:                     req.OutIp,
+		NationId:                  req.NationId,
+		VpnPort:                   req.VpnPort,
+		TransportProtocol:         req.TransportProtocol,
+		StreamSettingsHost:        req.StreamSettingsHost,
+		StreamSettingsPath:        req.StreamSettingsPath,
+		StreamSettingsServiceName: req.StreamSettingsServiceName,
+		Method:                    req.Method,
+		FrpServerId:               req.FrpServerId,
+		FrpProtocol:               req.FrpProtocol,
+		FrpPort:                   req.FrpPort,
+		Other:                     req.Other,
+		StreamSettingsReality:     req.StreamSettingsReality,
 	}
 
 	err := service.VpnNode.Edit(r.GetCtx(), &vpnNodeModel, req.Transfers)
@@ -218,6 +222,7 @@ func (c *vpnNode) NodeURLTest(r *ghttp.Request) {
 	pingId := r.GetInt("pingId")
 	sm, err := service.VpnNode.SpeedPing(r.GetCtx(), nodeId, pingId, false)
 	if err != nil {
+		sm = -1
 		g.Log().Error(err.Error())
 	}
 	c.SusJsonExit(r, sm)

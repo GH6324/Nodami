@@ -2,11 +2,12 @@ package api
 
 import (
 	"common/commonInfo"
+	"encoding/json"
 	"fmt"
-	"gfast/app/common/global"
 	sysApi "gfast/app/system/api"
 	sysService "gfast/app/system/service"
 	"gfast/app/vpnAgent/service"
+	"gfast/library"
 	"github.com/gogf/gf/frame/g"
 	"github.com/gogf/gf/net/ghttp"
 	"os"
@@ -57,17 +58,22 @@ func (c vpnAgentApi) InstallAgentSh(r *ghttp.Request) {
 
 	content, _ := os.ReadFile("./config/agentInstall/install.sh")
 	sh := strings.Replace(string(content), "{{settings.serverId}}", fmt.Sprint(serverId), 1)
-	sh = strings.Replace(sh, "{{settings.serverApiUrl}}", global.GetAgentAPI(), 1)
+	sh = strings.Replace(sh, "{{settings.serverApiUrl}}", library.GetAgentAPI(), 1)
 	sh = strings.Replace(sh, "{{frpCommon.startFrps}}", "true", 1)
-	sh = strings.Replace(sh, "{{xrayCommon.commonUuid}}", global.Settings.Agent.CommonUUID, 1)
-	sh = strings.Replace(sh, "{{settings.mqttServer}}", global.GetAgentMqtt(), 1)
+	sh = strings.Replace(sh, "{{xrayCommon.commonUuid}}", library.Settings.Agent.CommonUUID, 1)
+	sh = strings.Replace(sh, "{{settings.mqttServer}}", library.GetAgentMqtt(), 1)
 	sh = strings.Replace(sh, "{{settings.mqttPort}}", "0", 1)
 	sh = strings.ReplaceAll(sh, "{{dnsServers}}", serverDns)
 	sh = strings.Replace(sh, "{{settings.mqttUser}}", g.Cfg().GetString("mqtt.user"), 1)
 	sh = strings.Replace(sh, "{{settings.mqttPass}}", g.Cfg().GetString("mqtt.pass"), 1)
-	sh = strings.ReplaceAll(sh, "{{server.docker}}", fmt.Sprintf("curl -sSL %s/agent/install/docker/main.sh", global.GetAgentAPI()))
-	sh = strings.ReplaceAll(sh, "{{server.mirrors}}", fmt.Sprintf("curl -sSL %s/agent/install/mirrors/main.sh", global.GetAgentAPI()))
-	sh = strings.ReplaceAll(sh, "{{AGETN_API}}", global.GetAgentAPI())
+	sh = strings.ReplaceAll(sh, "{{server.docker}}", fmt.Sprintf("curl -sSL %s/agent/install/docker/main.sh", library.GetAgentAPI()))
+	sh = strings.ReplaceAll(sh, "{{server.mirrors}}", fmt.Sprintf("curl -sSL %s/agent/install/mirrors/main.sh", library.GetAgentAPI()))
+	sh = strings.ReplaceAll(sh, "{{agent_api}}", library.GetAgentAPI())
+
+	shortIds, _ := json.Marshal(library.Settings.Peality.ShortIds)
+	sh = strings.ReplaceAll(sh, "{{peality.shortIds}}", string(shortIds))
+	sh = strings.ReplaceAll(sh, "{{peality.private}}", library.Settings.Peality.Private)
+	sh = strings.ReplaceAll(sh, "{{peality.public}}", library.Settings.Peality.Public)
 	r.Response.WriteExit(sh)
 }
 

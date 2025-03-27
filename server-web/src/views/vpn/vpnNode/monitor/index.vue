@@ -75,9 +75,8 @@
                               <el-col :sm="24" :md="16" v-if="!zduan">
                                 <el-col v-for="v in ping">
                                   <el-row>服务器ID:{{ v.inServerId }} -> 服务器ID:{{ v.toServerId }}
-                                    <el-tag v-if="v.value >= 0" style="font-size: 10px;" size="mini"
-                                            :type="(v.value > 0 && v.value <1000)?'success':((v.value > 0 && v.value >=1000)?'warning':'danger')">
-                                      {{ v.value > 0 ? (v.value + " ms") : "---- sm" }}
+                                    <el-tag  style="font-size: 10px;" size="mini" :type="(v.value >= 0 && v.value <1000)?'success':((v.value > 0 && v.value >=1000)?'warning':'danger')">
+                                      {{ v.value > -1 ? (v.value + " ms") : "---- sm" }}
                                     </el-tag>
                                   </el-row>
                                 </el-col>
@@ -129,12 +128,10 @@
                                   <el-col :span="10" style="text-align: right;padding:0px">{{ value.nationName }}:
                                   </el-col>
                                   <el-col :span="14">
-                                    <el-tag @click="pingTest(value,nodeInfo.nodeId)" v-if="value.ping >= 0"
-                                            style="width: 85px;font-size: 10px;" size="mini"
-                                            :type="(value.ping > 0 && value.ping <1000)?'success':((value.ping > 0 && value.ping >=1000)?'warning':'danger')">
-                                      {{ value.ping > 0 ? (value.ping + " ms") : "---- sm" }}
+                                    <el-tag @click="pingTest(value,nodeInfo.nodeId)" v-if="value.ping != -2" style="width: 85px;font-size: 10px;" size="mini" :type="(value.ping >= 0 && value.ping <1000)?'success':((value.ping > 0 && value.ping >=1000)?'warning':'danger')">
+                                      {{ value.ping > -1 ? (value.ping + " ms") : "---- sm" }}
                                     </el-tag>
-                                    <el-tag v-if="value.ping < 0" style="width: 55px;font-size: 10px;" size="mini"><i
+                                    <el-tag v-if="value.ping == -2" style="width: 55px;font-size: 10px;" size="mini"><i
                                       class="el-icon-loading"></i></el-tag>
                                   </el-col>
                                 </el-row>
@@ -347,7 +344,7 @@ export default {
     },
 
     pingTest(pingInfo, nodeId) {
-      pingInfo.ping = -1
+      pingInfo.ping = -2
       pingTest(nodeId, pingInfo.pingId).then(response => {
         pingInfo.ping = response.data
       })

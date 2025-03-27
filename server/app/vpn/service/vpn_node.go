@@ -494,6 +494,9 @@ func (s *vpnNode) SpeedPing(ctx context.Context, nodeId, pingId int, speed bool)
 		testUrl = modelNodePing.SpeedUrl
 	}
 	sm, err = commonInfo.SpeedPing(ctx, modelNodePing.ServerIp, testUrl, 1703, string(proxiesString), speed)
+	if err != nil {
+		sm = -1
+	}
 
 	return
 }

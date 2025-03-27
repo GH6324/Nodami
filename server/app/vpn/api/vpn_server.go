@@ -273,7 +273,10 @@ func (c *vpnServer) PingIp(r *ghttp.Request) {
 			InServerId: info.ServerId,
 			ToServerId: info.FrpServerId,
 		}
-		pingRes.Value, _ = service.PingIp(info.ServerId, info.FrpServerIp)
+		pingRes.Value, err = service.PingIp(info.ServerId, info.FrpServerIp)
+		if err != nil {
+			pingRes.Value = -1
+		}
 		res = append(res, pingRes)
 	}
 
@@ -283,7 +286,10 @@ func (c *vpnServer) PingIp(r *ghttp.Request) {
 				InServerId: v.EntranceServerId,
 				ToServerId: v.ExitServerId,
 			}
-			pingRes.Value, _ = service.PingIp(v.EntranceServerId, v.ExitServerIp)
+			pingRes.Value, err = service.PingIp(v.EntranceServerId, v.ExitServerIp)
+			if err != nil {
+				pingRes.Value = -1
+			}
 			res = append(res, pingRes)
 		}
 	}

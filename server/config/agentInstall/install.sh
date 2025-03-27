@@ -71,12 +71,12 @@ setDNS(){
 }
 
 downAgent() {
-  AGETN_NAME="agent_sing_box.zip?1.0.1"
+  AGETN_NAME="agent_sing_box.zip?v1.0.1"
   ZIP_FILE="$PWD/$AGETN_NAME"
   ZIP_FILE_BASE=$(basename "$ZIP_FILE")
   find "$PWD" -maxdepth 1 -type f \( -name "*.zip*" -o -name "*.zip?*" \) ! -name "$ZIP_FILE_BASE" -exec rm -f {} \;
 
-  DOWNLOAD_URL="{{AGETN_API}}/down/$AGETN_NAME"
+  DOWNLOAD_URL="{{agent_api}}/down/$AGETN_NAME"
 
   # 检查是否已安装 zip
   if command -v unzip &> /dev/null; then
@@ -295,7 +295,10 @@ frpCommon:
   useEncryption: true
   maxIncomingStreams: 10240000
   udpPacketSize: 10240000
-
+peality:
+  shortIds: {{peality.shortIds}}
+  private: {{peality.private}}
+  public: {{peality.public}}
 EOF
 
   # 设置镜像和标签

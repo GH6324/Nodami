@@ -38,8 +38,7 @@ delimiters = ["${", "}"]
 
 # Database.
 [database]
-Link = "mysql:root:werhhn!#sdERTY23412@tcp(127.0.0.1:3306)/nodami-server"
-#Link = "mysql:root:123456@tcp(10.211.55.13:3306)/vpnmanager"
+Link = "mysql:root:123456@tcp(10.211.55.13:3306)/vpnmanager"
 charset = "utf8mb4" #数据库编码
 debug   = true
 dryRun = false #空跑

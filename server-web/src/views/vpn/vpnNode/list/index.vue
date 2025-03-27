@@ -151,10 +151,12 @@
                     style="margin-top: 10px; flex-wrap: wrap;align-items: center; justify-content: flex-start;font-size: 10px;">
               <span style="margin-right: 3px" v-for="(value, index) in scope.row.ping" :key="index">
                 {{ value.nationName }}:
-                <el-tag @click="pingTest(scope.row.nodeId,value)" v-if="value.ping >= 0"
+                <el-tag @click="pingTest(scope.row.nodeId,value)" v-if="value.ping != -2"
                         style="width: 55px;font-size: 10px;" size="mini"
-                        :type="(value.ping > 0 && value.ping <1000)?'success':((value.ping > 0 && value.ping >=1000)?'warning':'danger')">{{ value.ping > 0 ? (value.ping + " ms") : "----" }}</el-tag>
-                <el-tag v-if="value.ping < 0" style="width: 55px;font-size: 10px;" size="mini"><i
+                        :type="(value.ping >= 0 && value.ping <1000)?'success':((value.ping > 0 && value.ping >=1000)?'warning':'danger')">{{
+                    value.ping > -1 ? (value.ping + " ms") : "----"
+                  }}</el-tag>
+                <el-tag v-if="value.ping == -2" style="width: 55px;font-size: 10px;" size="mini"><i
                   class="el-icon-loading"></i></el-tag>
               </span>
             </el-row>
@@ -288,7 +290,7 @@
               ></paginationSelect>
             </el-form-item>
             <el-form-item label="内网穿透" prop="frpProtocol">
-              <el-select size="small" v-model="form.frpProtocol" placeholder="内网穿透协议" clearable
+              <el-select size="small" v-model="form.frpProtocol" placeholder="如果您不懂请留空" clearable
                          style="width:150px" @clear="()=>{
                          form.frpServerId = undefined
                          form.frpPort = undefined
@@ -357,13 +359,7 @@
               ></paginationSelect>
             </el-form-item>
             <el-form-item label="协议" prop="protocol">
-              <el-select size="small" v-model="form.protocol" placeholder="请选择协议" style="width: 150px"
-                         @clear="()=>{
-                             form.ws = '-1'
-                         }"
-                         @change="function(v){
-                             form.ws = '-1'
-                         }">
+              <el-select size="small" v-model="form.protocol" placeholder="请选择协议" style="width: 150px">
                 <el-option
                   v-for="dict in singBoxProtocolOptions"
                   :key="dict.key"
@@ -382,21 +378,42 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="服务端口" prop="vpnPort" v-if="!form.addType">
-              <el-input type="number" v-model="form.vpnPort" placeholder="不填自动分配端口" size="small" style="width: 150px"/>
-            </el-form-item>
-            <el-form-item label="开启WS伪装" prop="ws" v-if="form.protocol == 'vmess' ">
-              <el-select v-model="form.ws" placeholder="ws" size="small" style="width: 150px">
+
+            <el-form-item label="伪装协议" prop="transportProtocol"
+                          v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan'">
+              <el-select v-model="form.transportProtocol" placeholder="transportProtocol" size="small"
+                         style="width: 150px">
                 <el-option
-                  v-for="dict in isonoroffOptions"
+                  v-for="dict in streamSettingsOptions"
                   :key="dict.key"
                   :label="dict.value"
                   :value="dict.key"
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="WSPath" prop="wsPath" v-if="form.ws == 1 && (form.protocol == 'vmess' || (form.protocol == 'shadowsocks' && form.serverCore == 'xray'))">
-              <el-input v-model="form.wsPath" placeholder="wsPath" size="small" style="width: 150px"/>
+            <el-form-item label="host" prop="streamSettingsHost" v-if="form.transportProtocol">
+              <el-input  v-model="form.streamSettingsHost" placeholder="如果您不清楚请保持默认" size="small" style="width: 150px"/>
+            </el-form-item>
+            <el-form-item label="path" prop="streamSettingsPath" v-if="form.transportProtocol == 'websocket'">
+              <el-input v-model="form.streamSettingsPath" placeholder="如果您不清楚请保持默认" size="small"
+                        style="width: 150px"/>
+            </el-form-item>
+            <el-form-item label="serviceName" prop="streamSettingsServiceName" v-if="form.transportProtocol == 'grpc'">
+              <el-input v-model="form.streamSettingsServiceName" placeholder="如果您不清楚请保持默认" size="small"
+                        style="width: 150px"/>
+            </el-form-item>
+            <el-form-item label="reality" prop="streamSettingsReality" v-if="form.transportProtocol == 'grpc' && form.protocol != 'vmess'">
+              <el-select v-model="form.streamSettingsReality" placeholder="streamSettingsReality" size="small" style="width: 150px">
+                <el-option
+                  v-for='dict in [ {  key: "开启",  value: "1"  }, { key: "关闭",  value: "0" }]'
+                  :key="dict.value"
+                  :label="dict.key"
+                  :value="dict.value"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="服务端口" prop="vpnPort" v-if="!form.addType">
+              <el-input type="number" v-model="form.vpnPort" placeholder="不填自动分配端口" size="small" style="width: 150px"/>
             </el-form-item>
           </el-col>
           <el-col :span="10">
@@ -515,7 +532,28 @@ export default {
         },
       ],
 
-
+      xrayProtocolOptions: [
+        {
+          key: "shadowsocks",
+          value: "shadowsocks"
+        },
+        {
+          key: "vmess",
+          value: "vmess"
+        },
+        {
+          key: "vless",
+          value: "vless"
+        },
+        {
+          key: "trojan",
+          value: "trojan"
+        },
+        {
+          key: "socks",
+          value: "socks"
+        }
+      ],
       singBoxProtocolOptions: [
         {
           key: "shadowsocks",
@@ -524,6 +562,14 @@ export default {
         {
           key: "vmess",
           value: "vmess"
+        },
+        {
+          key: "vless",
+          value: "vless"
+        },
+        {
+          key: "trojan",
+          value: "trojan"
         },
         {
           key: "hysteria",
@@ -538,6 +584,14 @@ export default {
         {
           key: "vmess",
           value: "vmess"
+        },
+        {
+          key: "vless",
+          value: "vless"
+        },
+        {
+          key: "trojan",
+          value: "trojan"
         },
         {
           key: "socks",
@@ -593,6 +647,16 @@ export default {
       nationIdOptions: [],
       // isonoroffOptions
       isonoroffOptions: [],
+      streamSettingsOptions: [
+        {
+          key: "grpc",
+          value: "grpc"
+        },
+        {
+          key: "websocket",
+          value: "websocket"
+        },
+      ],
       // statusOptions字典数据
       statusOptions: [],
       optionsOrderBy: [
@@ -808,7 +872,7 @@ export default {
       });
     },
     pingTest(nodeId, pingInfo) {
-      pingInfo.ping = -1
+      pingInfo.ping = -2
       pingTest(nodeId, pingInfo.pingId).then(response => {
         pingInfo.ping = response.data
       }).catch((e) => {
@@ -873,13 +937,16 @@ export default {
         protocol: undefined,
         transitPort: undefined,
         transitProtocol: undefined,
-        otuType: undefined,
+        otuType: "1",
         outIp: undefined,
         outNodeId: undefined,
         vpnPort: undefined,
         nodeLineIds: undefined,
-        ws: "-1",
-        wsPath: undefined,
+        transportProtocol: undefined,
+        streamSettingsServiceName: "index",
+        streamSettingsReality: "0",
+        streamSettingsPath: "/index",
+        streamSettingsHost: "www.cloudflare.com",
         magnification: 1,
         domainId: undefined,
         method: undefined,
@@ -949,7 +1016,7 @@ export default {
         data.transitProtocol = '' + (data.transitProtocol || '')
         data.frpProtocol = '' + (data.frpProtocol || "")
         data.outNodeId = '' + (data.outNodeId || "")
-        data.ws = '' + data.ws
+        data.streamSettingsReality = '' + data.streamSettingsReality
         if (copy) {
           data.nodeId = undefined
           data.outIp = ""

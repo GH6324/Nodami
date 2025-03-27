@@ -53,7 +53,7 @@ func (c *sysWebSet) ConfigKey(r *ghttp.Request) {
 	if configKey == "" {
 		c.FailJsonExit(r, "configKey is null")
 	}
-	settingsMap, err := library.StructToMap(global.Settings)
+	settingsMap, err := library.StructToMap(library.Settings)
 	if err != nil {
 		c.FailJsonExit(r, err.Error())
 	}

@@ -20,9 +20,17 @@ import (
 const (
 	Protocol_Shadowsocks = "shadowsocks"
 	Protocol_VMess       = "vmess"
+	Protocol_VLess       = "vless"
+	Protocol_Trojan      = "trojan"
 	Protocol_Socks       = "socks"
 	Protocol_Hysteria    = "hysteria"
-	HysteriaOut          = "hysteria-out"
+	Dokodemo_Door        = "dokodemo-door"
+
+	Shadowsocks_Grpc = "shadowsocks-grpc"
+	HysteriaOut      = "hysteria-out"
+
+	Protocol_Hysteria_Proxy    = "hysteria_proxy"
+	Protocol_Shadowsocks_Proxy = "shadowsocks_proxy"
 )
 
 const (
@@ -216,23 +224,23 @@ type Nodes struct {
 }
 
 type NodesConfig struct {
-	NodeId   int32  `json:"nodeId"`
-	ServerId int32  `json:"serverId"`
-	OutIp    string `json:"outIp"`
-	Protocol string `json:"protocol"`
-	Ws       bool   `json:"ws"`
-	WsPath   string `json:"wsPath"`
-	Method   string `json:"method"`
-
-	NodeServerIp   string `json:"nodeServerIp"`
-	NodeServerPort int    `json:"vpnPort"`
-
-	TransitServerPort int `json:"transitPort"`
-
-	FrpServerIp   string
-	FrpServerPort int
-
-	ServerCore string
+	NodeId                    int32  `json:"nodeId"`
+	ServerId                  int32  `json:"serverId"`
+	OutIp                     string `json:"outIp"`
+	Protocol                  string `json:"protocol"`
+	DomainName                string `json:"domainName"`
+	TransportProtocol         string `json:"transportProtocol"`
+	StreamSettingsHost        string `json:"streamSettingsHost"`
+	StreamSettingsPath        string `json:"streamSettingsPath"`
+	StreamSettingsReality     int    `json:"streamSettingsReality"`
+	StreamSettingsServiceName string `json:"streamSettingsServiceName"`
+	NodeServerIp              string `json:"nodeServerIp"`
+	NodeServerPort            int    `json:"vpnPort"`
+	TransitServerPort         int    `json:"transitPort"`
+	FrpServerIp               string `json:"frpServerIp"`
+	FrpServerPort             int    `json:"frpServerPort"`
+	ServerCore                string `json:"serverCore"`
+	Method                    string `json:"method"`
 }
 
 type NodesRes struct {
@@ -467,18 +475,37 @@ type CertificatesObject struct {
 }
 
 type TLSObject struct {
-	ServerName        string                `protobuf:"bytes,1,opt,name=serverName,proto3" json:"serverName,omitempty"`
-	DisableSystemRoot bool                  `protobuf:"varint,3,opt,name=disableSystemRoot,proto3" json:"disableSystemRoot,omitempty"`
-	Certificates      []*CertificatesObject `protobuf:"bytes,2,rep,name=certificates,proto3" json:"certificates,omitempty"`
+	ServerName        string               `protobuf:"bytes,1,opt,name=serverName,proto3" json:"serverName,omitempty"`
+	DisableSystemRoot bool                 `protobuf:"varint,3,opt,name=disableSystemRoot,proto3" json:"disableSystemRoot,omitempty"`
+	Certificates      []CertificatesObject `protobuf:"bytes,2,rep,name=certificates,proto3" json:"certificates,omitempty"`
 }
 
 type StreamSettingsObject struct {
-	Network       string               `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
-	Security      string               `protobuf:"bytes,2,opt,name=security,proto3" json:"security,omitempty"`
-	TlsSettings   *TLSObject           `protobuf:"bytes,4,opt,name=tlsSettings,proto3" json:"tlsSettings,omitempty"`
-	WsSettings    *WsSettingsObject    `protobuf:"bytes,3,opt,name=wsSettings,proto3" json:"wsSettings,omitempty"`
-	XhttpSettings *XhttpSettingsObject `protobuf:"bytes,3,opt,name=xhttpSettings,proto3" json:"xhttpSettings,omitempty"`
-	GRPCSettings  *GRPCSettingsObject  `protobuf:"bytes,3,opt,name=grpcSettings,proto3" json:"grpcSettings,omitempty"`
+	Network         string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
+	Security        string                 `protobuf:"bytes,2,opt,name=security,proto3" json:"security,omitempty"`
+	TlsSettings     *TLSObject             `protobuf:"bytes,4,opt,name=tlsSettings,proto3" json:"tlsSettings,omitempty"`
+	WsSettings      *WsSettingsObject      `protobuf:"bytes,3,opt,name=wsSettings,proto3" json:"wsSettings,omitempty"`
+	XhttpSettings   *XhttpSettingsObject   `protobuf:"bytes,3,opt,name=xhttpSettings,proto3" json:"xhttpSettings,omitempty"`
+	GRPCSettings    *GRPCSettingsObject    `protobuf:"bytes,3,opt,name=grpcSettings,proto3" json:"grpcSettings,omitempty"`
+	RealitySettings *RealitySettingsObject `protobuf:"bytes,3,opt,name=realitySettings,proto3" json:"realitySettings,omitempty"`
+}
+
+type RealitySettingsObject struct {
+	Show         bool     `json:"show"`
+	Target       string   `json:"target,omitempty"`
+	Dest         string   `json:"dest,omitempty"`
+	Xver         int      `json:"xver,omitempty"`
+	ServerNames  []string `json:"serverNames,omitempty"`
+	PrivateKey   string   `json:"privateKey,omitempty"`
+	MinClientVer string   `json:"minClientVer,omitempty"`
+	MaxClientVer string   `json:"maxClientVer,omitempty"`
+	MaxTimeDiff  int      `json:"maxTimeDiff,omitempty"`
+	ShortIds     []string `json:"shortIds,omitempty"`
+	Fingerprint  string   `json:"fingerprint,omitempty"`
+	ServerName   string   `json:"serverName,omitempty"`
+	PublicKey    string   `json:"publicKey,omitempty"`
+	ShortId      string   `json:"shortId,omitempty"`
+	SpiderX      string   `json:"spiderX,omitempty"`
 }
 
 type GRPCSettingsObject struct {
