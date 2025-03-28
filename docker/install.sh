@@ -79,23 +79,16 @@ check_git_installed() {
 # 克隆或更新项目
 clone_or_update_repo() {
     if [ ! -d "$REPO_DIR/.git" ]; then
-        echo "🚀 项目不存在，正在从 GitHub 克隆..."
-        git clone "$REPO_URL" "$REPO_DIR"
-        cd "$REPO_DIR" || exit
+        echo "🚀 项目不存在，正在从 GitHub 克隆指定版本（浅克隆）..."
+        git clone --depth 1 --branch "$REPO_VERSION" "$REPO_URL" "$REPO_DIR"
     else
-        echo "🔄 项目已存在，检查版本是否最新..."
+        echo "🔄 项目已存在，正在拉取最新Tag..."
         cd "$REPO_DIR" || exit
-        git fetch --tags
-    fi
-
-    CURRENT_VERSION=$(git describe --tags --abbrev=0)
-    if [ "$CURRENT_VERSION" != "$REPO_VERSION" ]; then
-        echo "⬆️ 当前版本($CURRENT_VERSION)与所需版本($REPO_VERSION)不符，正在切换版本..."
-        git checkout tags/"$REPO_VERSION" -b "$REPO_VERSION"
-    else
-        echo "✅ 项目已是最新所需版本($REPO_VERSION)。"
+        git fetch --depth 1 origin tag "$REPO_VERSION"
+        git checkout tags/"$REPO_VERSION" -B "$REPO_VERSION"
     fi
 }
+
 
 # 安装 Nodami 并确认启动状态
 install_nodami(){
