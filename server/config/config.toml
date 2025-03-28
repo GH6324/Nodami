@@ -54,7 +54,7 @@ Stdout = true
 # Redis数据库配置
 [redis]
 open = true #是否开启 redis 缓存 若不开启使用gchache缓存方式
-default = "10.211.55.13:6379,2?idleTimeout=20&maxActive=100"
+default = "10.211.55.13:6379,4?idleTimeout=20&maxActive=100"
 
 #jwt配置
 [gToken]

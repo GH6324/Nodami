@@ -34,6 +34,16 @@ func (c *vpnAgentApi) Nodes(r *ghttp.Request) {
 
 	c.JsonExit(r, 0, "", nodes)
 }
+func (c *vpnAgentApi) Users(r *ghttp.Request) {
+
+	users, err := service.VpnAgentService.AgentUsers(r.GetCtx())
+	if err != nil {
+		c.JsonExit(r, 1000, err.Error(), nil)
+		return
+	}
+
+	c.JsonExit(r, 0, "", users)
+}
 
 func (c vpnAgentApi) InstallAgentSh(r *ghttp.Request) {
 	serverId := r.GetInt("serverId")

@@ -107,9 +107,27 @@ func (c *vpnAgentService) agentTransfers(transfers []model.VpnNodeTransfer) []Ag
 	return value
 
 }
+func (c *vpnAgentService) AgentUsers(ctx context.Context) (users []commonInfo.User, err error) {
+	req := dao.VpnSubscriptionSearchReq{}
+	req.Ctx = ctx
+	_, _, list, err := service.VpnSubscription.GetList(&req)
+	if err != nil {
+		return
+	}
+
+	users = make([]commonInfo.User, 0)
+	for _, v := range list {
+		users = append(users, commonInfo.User{
+			UUID:           v.UUID,
+			SubscriptionId: v.SubscriptionId,
+		})
+	}
+
+	return
+}
 
 func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId int) (nodesRes commonInfo.NodesRes, err error) {
-	nodeModels, err := vpnClientService.VpnNodeService.Nodes(ctx, nodeId, serverId)
+	nodeModels, err := vpnClientService.VpnNodeService.Nodes(ctx, nodeId, serverId, 0)
 	if err != nil {
 		return
 	}
@@ -144,7 +162,7 @@ func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId i
 
 		isSameServer := v.ServerId == serverId
 
-		isDefaultTransit := v.TransitProtocol == "" || v.TransitProtocol == commonInfo.Protocol_Hysteria
+		isDefaultTransit := v.TransitProtocol == "" || v.TransitProtocol == commonInfo.Protocol_Hysteria2
 
 		if isSameServer && v.TransitProtocol == commonInfo.HysteriaOut {
 
@@ -164,21 +182,22 @@ func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId i
 		if isSameServer && isDefaultTransit {
 
 			nodesConfig := commonInfo.NodesConfig{
-				NodeId:                    int32(v.NodeId),
-				ServerId:                  int32(v.ServerId),
-				OutIp:                     v.OutIp,
-				TransportProtocol:         v.TransportProtocol,
-				StreamSettingsHost:        v.StreamSettingsHost,
-				StreamSettingsPath:        v.StreamSettingsPath,
-				StreamSettingsServiceName: v.StreamSettingsServiceName,
-				StreamSettingsReality:     v.StreamSettingsReality,
-				Protocol:                  v.Protocol,
-				Method:                    v.Method,
-				NodeServerIp:              v.ServerIp,
-				NodeServerPort:            v.VpnPort,
-				TransitServerPort:         v.TransitPort,
-				FrpServerIp:               v.FrpServerIp,
-				FrpServerPort:             v.FrpPort,
+				NodeId:                          int32(v.NodeId),
+				ServerId:                        int32(v.ServerId),
+				OutIp:                           v.OutIp,
+				TransportProtocol:               v.TransportProtocol,
+				StreamSettingsHost:              v.StreamSettingsHost,
+				StreamSettingsPath:              v.StreamSettingsPath,
+				StreamSettingsServiceName:       v.StreamSettingsServiceName,
+				StreamSettingsReality:           v.StreamSettingsReality,
+				StreamSettingsCongestionControl: v.StreamSettingsCongestionControl,
+				Protocol:                        v.Protocol,
+				Method:                          v.Method,
+				NodeServerIp:                    v.ServerIp,
+				NodeServerPort:                  v.VpnPort,
+				TransitServerPort:               v.TransitPort,
+				FrpServerIp:                     v.FrpServerIp,
+				FrpServerPort:                   v.FrpPort,
 			}
 
 			nodesRes.SingBoxNodes = append(nodesRes.SingBoxNodes, nodesConfig)
@@ -207,17 +226,18 @@ func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId i
 
 					if ii == 0 {
 						nodesConfig := commonInfo.NodesConfig{
-							NodeId:                    int32(v.NodeId),
-							ServerId:                  int32(v.ServerId),
-							TransportProtocol:         v.TransportProtocol,
-							StreamSettingsHost:        v.StreamSettingsHost,
-							StreamSettingsPath:        v.StreamSettingsPath,
-							StreamSettingsServiceName: v.StreamSettingsServiceName,
-							StreamSettingsReality:     v.StreamSettingsReality,
-							Protocol:                  v.Protocol,
-							Method:                    v.Method,
-							NodeServerIp:              v.ServerIp,
-							NodeServerPort:            v.TransitPort,
+							NodeId:                          int32(v.NodeId),
+							ServerId:                        int32(v.ServerId),
+							TransportProtocol:               v.TransportProtocol,
+							StreamSettingsHost:              v.StreamSettingsHost,
+							StreamSettingsPath:              v.StreamSettingsPath,
+							StreamSettingsServiceName:       v.StreamSettingsServiceName,
+							StreamSettingsReality:           v.StreamSettingsReality,
+							StreamSettingsCongestionControl: v.StreamSettingsCongestionControl,
+							Protocol:                        v.Protocol,
+							Method:                          v.Method,
+							NodeServerIp:                    v.ServerIp,
+							NodeServerPort:                  v.TransitPort,
 						}
 
 						nodesRes.SingBoxNodes = append(nodesRes.SingBoxNodes, nodesConfig)
@@ -227,7 +247,7 @@ func (c *vpnAgentService) AgentNodes(ctx context.Context, serverId int, nodeId i
 					nodesRes.SingBoxTransfers = append(nodesRes.SingBoxTransfers, transfer)
 				}
 
-			} else if v.TransitProtocol == commonInfo.Protocol_Hysteria {
+			} else if v.TransitProtocol == commonInfo.Protocol_Hysteria2 {
 				transfers := c.agentTransfers(v.Transfers)
 
 				for ii, vv := range transfers {

@@ -15,7 +15,9 @@ type vpnClientApi struct {
 var VpnClientApi = new(vpnClientApi)
 
 func (c *vpnClientApi) Subscription(r *ghttp.Request) {
-	config, err := service.VpnNodeService.GetAppClashConfig(r.GetCtx())
+
+	subscriptionID := r.GetInt("subscriptionID")
+	config, err := service.VpnNodeService.GetAppClashConfig(r.GetCtx(), subscriptionID)
 	if err != nil {
 		c.JsonExit(r, -1, err.Error(), nil)
 		return

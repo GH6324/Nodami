@@ -29,64 +29,68 @@ var (
 
 // VpnNodeSearchReq 分页请求参数
 type VpnNodeSearchReq struct {
-	NodeId          string `p:"nodeId"`
-	NotNodeId       string `p:"nodeIdNo"`
-	ServerId        string `p:"serverId"`        //服务器
-	OutIp           string `p:"outIp"`           //出口IP
-	Protocol        string `p:"protocol"`        //协议
-	TransitProtocol string `p:"transitProtocol"` //中转服务协议
-	Other           string `p:"other"`
-	NationId        string `p:"nationId" `
+	NodeId      string `p:"nodeId"`
+	NotNodeId   string `p:"nodeIdNo"`
+	ServerId    string `p:"serverId"` //服务器
+	OutIp       string `p:"outIp"`    //出口IP
+	Protocol    string `p:"protocol"` //协议
+	NodeGroupId string `p:"nodeGroupId"`
+	Other       string `p:"other"`
+	NationId    string `p:"nationId" `
 	comModel.PageReq
 }
 
 // VpnNodeAddReq 添加操作请求参数
 type VpnNodeAddReq struct {
-	AddType                   int        `p:"addType"` //0单节点  1多ip服务器多节点 2多服务器多节点
-	ServerId                  int        `p:"serverId"`
-	ServerIds                 []int      `p:"serverIds"`
-	TransitPort               int        `p:"transitPort" `
-	TransitProtocol           string     `p:"transitProtocol" `
-	Transfers                 []TranceId `p:"transfers" `
-	Protocol                  string     `p:"protocol" v:"required#协议不能是空"`
-	OtuType                   int        `p:"otuType" v:"required#出口类型不能空"` // 1默认 2指定IP 3指定节点ID
-	NationId                  int        `p:"nationId" v:"required#nationId不能空"`
-	OutIp                     string     `p:"outIp"`
-	VpnPort                   int        `p:"vpnPort" `
-	Method                    string     `p:"method"`
-	FrpServerId               int        `p:"frpServerId"`
-	FrpProtocol               string     `p:"frpProtocol"`
-	FrpPort                   int        `p:"frpPort"`
-	Other                     string     `p:"other"`
-	TransportProtocol         string     `p:"transportProtocol" `         //
-	StreamSettingsHost        string     `p:"streamSettingsHost"`         //
-	StreamSettingsPath        string     `p:"streamSettingsPath" `        //
-	StreamSettingsServiceName string     `p:"streamSettingsServiceName" ` //
-	StreamSettingsReality     int        `p:"streamSettingsReality"`
+	AddType                         int        `p:"addType"` //0单节点  1多ip服务器多节点 2多服务器多节点
+	ServerId                        int        `p:"serverId"`
+	ServerIds                       []int      `p:"serverIds"`
+	TransitPort                     int        `p:"transitPort" `
+	TransitProtocol                 string     `p:"transitProtocol" `
+	Transfers                       []TranceId `p:"transfers" `
+	Protocol                        string     `p:"protocol" v:"required#协议不能是空"`
+	OtuType                         int        `p:"otuType" v:"required#出口类型不能空"` // 1默认 2指定IP 3指定节点ID
+	NationId                        int        `p:"nationId" v:"required#nationId不能空"`
+	OutIp                           string     `p:"outIp"`
+	VpnPort                         int        `p:"vpnPort" `
+	Method                          string     `p:"method"`
+	FrpServerId                     int        `p:"frpServerId"`
+	FrpProtocol                     string     `p:"frpProtocol"`
+	FrpPort                         int        `p:"frpPort"`
+	Other                           string     `p:"other"`
+	NodeGroupId                     int        `p:"nodeGroupId" `
+	TransportProtocol               string     `p:"transportProtocol" `         //
+	StreamSettingsHost              string     `p:"streamSettingsHost"`         //
+	StreamSettingsPath              string     `p:"streamSettingsPath" `        //
+	StreamSettingsServiceName       string     `p:"streamSettingsServiceName" ` //
+	StreamSettingsReality           int        `p:"streamSettingsReality"`
+	StreamSettingsCongestionControl string     `p:"streamSettingsCongestionControl"`
 }
 
 // VpnNodeEditReq 修改操作请求参数
 type VpnNodeEditReq struct {
-	NodeId                    int        `p:"nodeId"     v:"required#主键ID不能为空"`
-	ServerId                  int        `p:"serverId"   v:"required#服务器不能为空"`
-	Protocol                  string     `p:"protocol" v:"required#协议不能是空"`
-	OtuType                   int        `p:"otuType" v:"required#出口类型不能空"` // 1默认 2指定IP 3指定节点ID
-	NationId                  int        `p:"nationId" v:"required#nationId不能空"`
-	TransitPort               int        `p:"transitPort" `
-	TransitProtocol           string     `p:"transitProtocol" `
-	Transfers                 []TranceId `p:"transfers" `
-	OutIp                     string     `p:"outIp"`
-	VpnPort                   int        `p:"vpnPort"`
-	Method                    string     `p:"method"`
-	FrpServerId               int        `p:"frpServerId"`
-	FrpProtocol               string     `p:"frpProtocol"`
-	FrpPort                   int        `p:"frpPort"`
-	Other                     string     `p:"other"`
-	TransportProtocol         string     `p:"transportProtocol" `         //
-	StreamSettingsHost        string     `p:"streamSettingsHost"`         //
-	StreamSettingsPath        string     `p:"streamSettingsPath" `        //
-	StreamSettingsServiceName string     `p:"streamSettingsServiceName" ` //
-	StreamSettingsReality     int        `p:"streamSettingsReality"`
+	NodeId                          int        `p:"nodeId"     v:"required#主键ID不能为空"`
+	ServerId                        int        `p:"serverId"   v:"required#服务器不能为空"`
+	Protocol                        string     `p:"protocol" v:"required#协议不能是空"`
+	OtuType                         int        `p:"otuType" v:"required#出口类型不能空"` // 1默认 2指定IP 3指定节点ID
+	NationId                        int        `p:"nationId" v:"required#nationId不能空"`
+	TransitPort                     int        `p:"transitPort" `
+	TransitProtocol                 string     `p:"transitProtocol" `
+	Transfers                       []TranceId `p:"transfers" `
+	OutIp                           string     `p:"outIp"`
+	VpnPort                         int        `p:"vpnPort"`
+	Method                          string     `p:"method"`
+	FrpServerId                     int        `p:"frpServerId"`
+	FrpProtocol                     string     `p:"frpProtocol"`
+	FrpPort                         int        `p:"frpPort"`
+	Other                           string     `p:"other"`
+	NodeGroupId                     int        `p:"nodeGroupId" `
+	TransportProtocol               string     `p:"transportProtocol" `         //
+	StreamSettingsHost              string     `p:"streamSettingsHost"`         //
+	StreamSettingsPath              string     `p:"streamSettingsPath" `        //
+	StreamSettingsServiceName       string     `p:"streamSettingsServiceName" ` //
+	StreamSettingsReality           int        `p:"streamSettingsReality"`
+	StreamSettingsCongestionControl string     `p:"streamSettingsCongestionControl"`
 }
 
 // VpnNodeEditReqs 修改操作请求参数
@@ -239,8 +243,9 @@ type Proxie struct {
 	//  @description 节点类型 ss ssr vmess socks5 http snell trojan
 	Type string `yaml:"type,omitempty" json:"type,omitempty"`
 	// @description 加密方法
-	Cipher string `yaml:"cipher,omitempty" json:"cipher,omitempty"`
-	Sni    string `yaml:"sni,omitempty" json:"sni,omitempty"`
+	Cipher string   `yaml:"cipher,omitempty" json:"cipher,omitempty"`
+	Sni    string   `yaml:"sni,omitempty" json:"sni,omitempty"`
+	Alpn   []string `yaml:"alpn,omitempty" json:"alpn,omitempty"`
 	// @description 密码
 	Password string `yaml:"password,omitempty" json:"password,omitempty"`
 	// @description username
@@ -271,8 +276,9 @@ type Proxie struct {
 	SSOpts      *SSOpts      `yaml:"ss-opts,omitempty" json:"ss-opts,omitempty"`
 	RealityOpts *RealityOpts `yaml:"reality-opts,omitempty" json:"reality-opts,omitempty"`
 	// @description 出口IP 仅支持direct
-	SendThrough       string `yaml:"send-through,omitempty" json:"send-through,omitempty"`
-	ClientFingerprint string `yaml:"client-fingerprint,omitempty" json:"client-fingerprint,omitempty"`
+	SendThrough          string `yaml:"send-through,omitempty" json:"send-through,omitempty"`
+	ClientFingerprint    string `yaml:"client-fingerprint,omitempty" json:"client-fingerprint,omitempty"`
+	CongestionController string `yaml:"congestion-controller,omitempty" json:"congestion-controller,omitempty"`
 }
 type GrpcOpts struct {
 	GrpcServiceName string `yaml:"grpc-service-name,omitempty" json:"grpc-service-name,omitempty"`
@@ -318,6 +324,8 @@ type PluginOpts struct {
 	Path           string                 `yaml:"path,omitempty" json:"path,omitempty"`
 	Mux            bool                   `yaml:"mux" json:"mux"`
 	Headers        map[string]interface{} `yaml:"headers,omitempty" json:"headers,omitempty"`
+	Password       string                 `yaml:"password,omitempty" json:"password,omitempty"`
+	Version        int                    `yaml:"version,omitempty" json:"version,omitempty"`
 }
 type Group struct {
 	// @description 线路名称

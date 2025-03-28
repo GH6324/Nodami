@@ -30,6 +30,7 @@ func init() {
 		group.GET("/agent/install/mirrors/*sh", vpnAgentApi.InstallMirrors)
 		group.GET("/down/:fileName", vpnAgentApi.Down)
 		group.POST("/agent/nodes", vpnAgentApi.Nodes)
+		group.POST("/agent/users", vpnAgentApi.Users)
 
 	})
 }

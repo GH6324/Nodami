@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"os/exec"
 	"reflect"
@@ -23,14 +24,10 @@ const (
 	Protocol_VLess       = "vless"
 	Protocol_Trojan      = "trojan"
 	Protocol_Socks       = "socks"
-	Protocol_Hysteria    = "hysteria"
-	Dokodemo_Door        = "dokodemo-door"
-
-	Shadowsocks_Grpc = "shadowsocks-grpc"
-	HysteriaOut      = "hysteria-out"
-
-	Protocol_Hysteria_Proxy    = "hysteria_proxy"
-	Protocol_Shadowsocks_Proxy = "shadowsocks_proxy"
+	Protocol_Hysteria2   = "hysteria2"
+	Protocol_Shadowtls   = "shadowtls"
+	Protocol_Tuic        = "tuic"
+	HysteriaOut          = "hysteria2-out"
 )
 
 const (
@@ -224,23 +221,24 @@ type Nodes struct {
 }
 
 type NodesConfig struct {
-	NodeId                    int32  `json:"nodeId"`
-	ServerId                  int32  `json:"serverId"`
-	OutIp                     string `json:"outIp"`
-	Protocol                  string `json:"protocol"`
-	DomainName                string `json:"domainName"`
-	TransportProtocol         string `json:"transportProtocol"`
-	StreamSettingsHost        string `json:"streamSettingsHost"`
-	StreamSettingsPath        string `json:"streamSettingsPath"`
-	StreamSettingsReality     int    `json:"streamSettingsReality"`
-	StreamSettingsServiceName string `json:"streamSettingsServiceName"`
-	NodeServerIp              string `json:"nodeServerIp"`
-	NodeServerPort            int    `json:"vpnPort"`
-	TransitServerPort         int    `json:"transitPort"`
-	FrpServerIp               string `json:"frpServerIp"`
-	FrpServerPort             int    `json:"frpServerPort"`
-	ServerCore                string `json:"serverCore"`
-	Method                    string `json:"method"`
+	NodeId                          int32  `json:"nodeId"`
+	ServerId                        int32  `json:"serverId"`
+	OutIp                           string `json:"outIp"`
+	Protocol                        string `json:"protocol"`
+	DomainName                      string `json:"domainName"`
+	TransportProtocol               string `json:"transportProtocol"`
+	StreamSettingsHost              string `json:"streamSettingsHost"`
+	StreamSettingsPath              string `json:"streamSettingsPath"`
+	StreamSettingsReality           int    `json:"streamSettingsReality"`
+	StreamSettingsServiceName       string `json:"streamSettingsServiceName"`
+	StreamSettingsCongestionControl string `json:"streamSettingsCongestionControl"`
+	NodeServerIp                    string `json:"nodeServerIp"`
+	NodeServerPort                  int    `json:"vpnPort"`
+	TransitServerPort               int    `json:"transitPort"`
+	FrpServerIp                     string `json:"frpServerIp"`
+	FrpServerPort                   int    `json:"frpServerPort"`
+	ServerCore                      string `json:"serverCore"`
+	Method                          string `json:"method"`
 }
 
 type NodesRes struct {
@@ -327,21 +325,28 @@ func GetToTagNodeId(tag string) (nodeId int, bounds string, err error) {
 	return
 }
 
-func GetUidNodeIdCodeTOEmail(nodeId int) string {
-	return fmt.Sprintf("email-nodeId-%d@xray.com", nodeId)
+func GetUidNodeIdCodeTOEmail(nodeId int, subscriptionId int) string {
+	return fmt.Sprintf("email-nodeId-%d-subscriptionId-%d@xray.com", nodeId, subscriptionId)
 }
 
-func GetUidNodeIdCodeFoEmail(email string) (int, error) {
-	re := regexp.MustCompile(`email-nodeId-(\d+)-code-\[(.*?)\]@xray\.com`)
+func GetUidNodeIdCodeFoEmail(email string) (nodeId int, subscriptionId int, err error) {
+	re := regexp.MustCompile(`email-nodeId-(\d+)-subscriptionId-(\d+)]@xray\.com`)
 	matches := re.FindStringSubmatch(email)
 	if len(matches) < 2 {
-		return 0, fmt.Errorf("format not recognized")
+		err = fmt.Errorf("format not recognized")
+		return
 	}
-	nodeId, err := strconv.Atoi(matches[0])
+	nodeId, err = strconv.Atoi(matches[0])
 	if err != nil {
-		return 0, fmt.Errorf("error parsing NodeID: %s", err)
+		err = fmt.Errorf("error parsing nodeId  %s", err)
+		return
 	}
-	return nodeId, nil
+	subscriptionId, err = strconv.Atoi(matches[1])
+	if err != nil {
+		err = fmt.Errorf("error parsing subscriptionId  %s", err)
+		return
+	}
+	return
 }
 
 var locks = make(map[string]*sync.RWMutex) // 这里修改成存储 *sync.Mutex
@@ -692,4 +697,77 @@ func GetTCPCount() (int32, error) {
 
 func GetUDPCount() (int32, error) {
 	return getConnectionsCount("udp")
+}
+
+type VPNUser struct {
+	Users sync.Map
+	lock  sync.Mutex
+}
+
+type User struct {
+	UUID           string
+	SubscriptionId int
+}
+
+func (x *VPNUser) AddUser(user User) {
+	if user.UUID == "" {
+		return
+	}
+	x.lock.Lock()
+	defer x.lock.Unlock()
+	x.Users.Store(user.UUID, user)
+	return
+}
+func (x *VPNUser) ClearUsers() {
+	x.lock.Lock()
+	defer x.lock.Unlock()
+	x.Users.Range(func(key, value interface{}) bool {
+		x.Users.Delete(key)
+		return true
+	})
+}
+func (x *VPNUser) DelUser(user User) {
+	x.lock.Lock()
+	defer x.lock.Unlock()
+	x.Users.Delete(user.UUID)
+	return
+}
+func (x *VPNUser) GetUsers() []User {
+	userList := make([]User, 0)
+	x.Users.Range(func(key, value interface{}) bool {
+		userList = append(userList, value.(User))
+		return true
+	})
+	return userList
+}
+func (x *VPNUser) CompareUsers(newUsers []User) (added []User, removed []User) {
+	added = make([]User, 0)
+	removed = make([]User, 0)
+
+	newUsersMap := make(map[string]User)
+	for _, user := range newUsers {
+		newUsersMap[user.UUID] = user
+	}
+
+	// 查找新增的用户
+	for key, value := range newUsersMap {
+		if _, exists := x.Users.Load(key); !exists {
+			added = append(added, value)
+		}
+	}
+
+	// 查找被删除的用户
+	x.Users.Range(func(key, value interface{}) bool {
+		if _, exists := newUsersMap[key.(string)]; !exists {
+			removed = append(removed, value.(User))
+		}
+		return true
+	})
+
+	return
+}
+
+func GenerateUUIDFromString(input string) string {
+	// 使用DNS命名空间，也可以自定义其他的
+	return uuid.NewSHA1(uuid.NameSpaceDNS, []byte(input)).String()
 }

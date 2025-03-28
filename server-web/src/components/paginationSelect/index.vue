@@ -139,7 +139,7 @@ export default {
         }
 
         if (typeof val !== 'object' && typeof val !== "array" && this.searchKey && !this.searchValue) {
-          if (val && this.containsElement(this.list,val)){
+          if (val && this.containsElement(this.list, val)) {
             this.searchValue = value;
             this.getList(true)
           }
@@ -147,7 +147,7 @@ export default {
         } else if (typeof val !== "array") {
           for (let index in val) {
             let v = val[index]
-            if (v && this.containsElement(this.list,v)){
+            if (v && this.containsElement(this.list, v)) {
               this.searchValue = value;
               this.getList(true)
             }
@@ -183,12 +183,17 @@ export default {
       scrollTo(0, 800)
     },
     getLabel(item) {
-      let labelKey = ""
+      let labelKey = []
       Object.entries(this.labelKey).forEach(([key, index]) => {
         let v = item[index]
-        labelKey += key + ":" + langShow(v) + "; "
+        if (key) {
+          // labelKey += key + ":" + langShow(v) + "; "
+          labelKey.push(key + ":" + langShow(v))
+        } else {
+          labelKey.push(langShow(v))
+        }
       });
-      return labelKey
+      return labelKey.join(",");
     },
     updateValue(val) {
       this.$emit('input', val);

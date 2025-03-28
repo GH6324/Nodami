@@ -69,8 +69,8 @@ func (s *vpnNode) GetList(req *dao.VpnNodeSearchReq) (total, page int, list []*m
 		m = m.Where(dao.VpnNode.Table+"."+dao.VpnNode.Columns.Protocol+" = ?", req.Protocol)
 	}
 
-	if req.TransitProtocol != "" {
-		m = m.Where(dao.VpnNode.Table+"."+dao.VpnNode.Columns.TransitProtocol+" = ?", req.TransitProtocol)
+	if req.NodeGroupId != "" {
+		m = m.Where(dao.VpnNode.Table+"."+dao.VpnNode.Columns.NodeGroupId+" = ?", req.NodeGroupId)
 	}
 
 	if cast.ToInt(req.NationId) > 0 {
@@ -464,7 +464,7 @@ func (s *vpnNode) DeleteByIds(ctx context.Context, ids []int) (err error) {
 
 func (s *vpnNode) SpeedPing(ctx context.Context, nodeId, pingId int, speed bool) (sm int, err error) {
 
-	proxies, err := vpnClient.VpnNodeService.GetClashProxies(ctx, nodeId)
+	proxies, err := vpnClient.VpnNodeService.GetClashProxies(ctx, nodeId, 0)
 	if err != nil {
 		return
 	}

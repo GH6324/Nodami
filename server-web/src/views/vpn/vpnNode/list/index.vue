@@ -21,6 +21,16 @@
           ></el-option>
         </el-select>
       </el-form-item>
+      <el-form-item label="分组" prop="nodeGroupId">
+        <el-select size="mini" v-model="queryParams.nodeGroupId" placeholder="分组" style="width: 120px" clearable>
+          <el-option
+            v-for="dict in nodeGroupOptions"
+            :key="dict.key"
+            :label="dict.value"
+            :value="dict.key"
+          ></el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item label="服务器" prop="serverId">
         <paginationSelect v-model="queryParams.serverId"
                           size="mini"
@@ -36,18 +46,7 @@
       <el-form-item label="协议" prop="protocol">
         <el-select v-model="queryParams.protocol" placeholder="请选择协议" clearable size="mini" style="width: 140px">
           <el-option
-            v-for="dict in allProtocolOptions"
-            :key="dict.key"
-            :label="dict.value"
-            :value="dict.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="中转协议" prop="transitProtocol">
-        <el-select v-model="queryParams.transitProtocol" placeholder="请选择中转服务协议" clearable size="mini"
-                   style="width: 140px">
-          <el-option
-            v-for="dict in allTransitProtocolOptions"
+            v-for="dict in singBoxProtocolOptions"
             :key="dict.key"
             :label="dict.value"
             :value="dict.key"
@@ -247,7 +246,8 @@
       @pagination="getList"
     />
 
-    <el-dialog :title="title" v-if="open" :visible.sync="open" width="1100px" append-to-body :close-on-click-modal="false">
+    <el-dialog :title="title" v-if="open" :visible.sync="open" width="1100px" append-to-body
+               :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row :gutter="24">
           <el-col :span="7">
@@ -289,6 +289,8 @@
                                 width="150px"
               ></paginationSelect>
             </el-form-item>
+
+
             <el-form-item label="内网穿透" prop="frpProtocol">
               <el-select size="small" v-model="form.frpProtocol" placeholder="如果您不懂请留空" clearable
                          style="width:150px" @clear="()=>{
@@ -317,8 +319,19 @@
               ></paginationSelect>
             </el-form-item>
             <el-form-item label="穿透端口" prop="transitPort" v-if="!form.addType && form.frpProtocol">
-              <el-input size="small" type="number" v-model="form.frpPort" placeholder="FRP端口留空自动"
+              <el-input size="small" type="number" v-model="form.frpPort" placeholder="留空自动分配端口"
                         style="width:150px"/>
+            </el-form-item>
+            <el-form-item label="节点分组" prop="nodeGroupId">
+              <el-select size="mini" v-model="form.nodeGroupId" placeholder="请选择节点分组" style="width: 150px"
+                         clearable>
+                <el-option
+                  v-for="dict in nodeGroupOptions"
+                  :key="dict.key"
+                  :label="dict.value"
+                  :value="dict.key"
+                ></el-option>
+              </el-select>
             </el-form-item>
             <el-form-item label="节点地区" prop="nationId">
               <el-select size="small" v-model="form.nationId" placeholder="地区" style="width: 150px">
@@ -359,7 +372,16 @@
               ></paginationSelect>
             </el-form-item>
             <el-form-item label="协议" prop="protocol">
-              <el-select size="small" v-model="form.protocol" placeholder="请选择协议" style="width: 150px">
+              <el-select size="small" v-model="form.protocol" placeholder="请选择协议" style="width: 150px" @clear="()=>{
+                             form.transportProtocol = undefined
+                             form.method = undefined
+
+                         }"
+                         @change="function(v){
+                             form.transportProtocol = undefined
+                             form.method = undefined
+
+                         }">
                 <el-option
                   v-for="dict in singBoxProtocolOptions"
                   :key="dict.key"
@@ -369,7 +391,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="加密方式" prop="method" v-if="form.protocol == 'shadowsocks'">
-              <el-select size="small" style="width: 150px" v-model="form.method" placeholder="method">
+              <el-select size="small" style="width: 150px" v-model="form.method" placeholder="请选择加密方式">
                 <el-option
                   v-for="dict in singBoxShadowsocksMethodOptions"
                   :key="dict.key"
@@ -378,10 +400,20 @@
                 ></el-option>
               </el-select>
             </el-form-item>
+            <el-form-item label="拥塞控制算法" prop="transportProtocol" v-if="form.protocol == 'tuic'">
+              <el-select v-model="form.streamSettingsCongestionControl" placeholder="请选择拥塞控制算法" size="small"
+                         style="width: 150px">
+                <el-option
+                  v-for="dict in congestionControlOptions"
+                  :key="dict.key"
+                  :label="dict.value"
+                  :value="dict.key"
+                ></el-option>
+              </el-select>
+            </el-form-item>
 
-            <el-form-item label="伪装协议" prop="transportProtocol"
-                          v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan'">
-              <el-select v-model="form.transportProtocol" placeholder="transportProtocol" size="small"
+            <el-form-item label="伪装协议" prop="transportProtocol" v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan'">
+              <el-select v-model="form.transportProtocol" placeholder="请选择伪装协议" size="small"
                          style="width: 150px">
                 <el-option
                   v-for="dict in streamSettingsOptions"
@@ -391,8 +423,8 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="host" prop="streamSettingsHost" v-if="form.transportProtocol">
-              <el-input  v-model="form.streamSettingsHost" placeholder="如果您不清楚请保持默认" size="small" style="width: 150px"/>
+            <el-form-item label="host" prop="streamSettingsHost" v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan' || form.protocol == 'shadowtls' || form.protocol == 'tuic'">
+              <el-input v-model="form.streamSettingsHost" placeholder="不能为空不然可能无法连接" size="small" style="width: 150px"/>
             </el-form-item>
             <el-form-item label="path" prop="streamSettingsPath" v-if="form.transportProtocol == 'websocket'">
               <el-input v-model="form.streamSettingsPath" placeholder="如果您不清楚请保持默认" size="small"
@@ -403,7 +435,8 @@
                         style="width: 150px"/>
             </el-form-item>
             <el-form-item label="reality" prop="streamSettingsReality" v-if="form.transportProtocol == 'grpc' && form.protocol != 'vmess'">
-              <el-select v-model="form.streamSettingsReality" placeholder="streamSettingsReality" size="small" style="width: 150px">
+              <el-select v-model="form.streamSettingsReality" placeholder="不懂请默认" size="small"
+                         style="width: 150px">
                 <el-option
                   v-for='dict in [ {  key: "开启",  value: "1"  }, { key: "关闭",  value: "0" }]'
                   :key="dict.value"
@@ -413,7 +446,8 @@
               </el-select>
             </el-form-item>
             <el-form-item label="服务端口" prop="vpnPort" v-if="!form.addType">
-              <el-input type="number" v-model="form.vpnPort" placeholder="不填自动分配端口" size="small" style="width: 150px"/>
+              <el-input type="number" v-model="form.vpnPort" placeholder="留空自动分配端口" size="small"
+                        style="width: 150px"/>
             </el-form-item>
           </el-col>
           <el-col :span="10">
@@ -443,7 +477,8 @@
               ></transfers>
             </el-form-item>
             <el-form-item label="中转端口" prop="transitPort" v-if="!form.addType && form.transitProtocol">
-              <el-input type="number" v-model="form.transitPort" placeholder="中转端口留空自动" size="small" style="width: 150px"/>
+              <el-input type="number" v-model="form.transitPort" placeholder="留空自动分配端口" size="small"
+                        style="width: 150px"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -460,15 +495,7 @@
   </div>
 </template>
 <script>
-import {
-  addVpnNode,
-  delVpnNode,
-  getVpnNode,
-  listVpnNode,
-  pingTest,
-  updateVpnNode,
-  updateVpnNodes,
-} from "@/api/vpn/vpnNode";
+import {addVpnNode, delVpnNode, getVpnNode, listVpnNode, pingTest, updateVpnNode,} from "@/api/vpn/vpnNode";
 import {listVpnServer} from "@/api/vpn/vpnServer";
 import {langShow, sizeFormat} from "@/utils";
 import monitor from "@/views/vpn/vpnNode/monitor/index.vue";
@@ -478,6 +505,7 @@ import {parseTime} from "../../../../utils/ruoyi";
 import InputList from "@/components/InputList/index.vue";
 import transfers from "@/views/vpn/vpnNode/list/transfers.vue";
 import {listVpnNodeNation} from "@/api/vpn/vpnNodeNation";
+import {listVpnNodeGroup} from "@/api/vpn/vpnNodeGroup";
 
 export default {
   components: {InputList, monitor, transfers},
@@ -532,54 +560,15 @@ export default {
         },
       ],
 
-      xrayProtocolOptions: [
-        {
-          key: "shadowsocks",
-          value: "shadowsocks"
-        },
-        {
-          key: "vmess",
-          value: "vmess"
-        },
-        {
-          key: "vless",
-          value: "vless"
-        },
-        {
-          key: "trojan",
-          value: "trojan"
-        },
-        {
-          key: "socks",
-          value: "socks"
-        }
-      ],
+
       singBoxProtocolOptions: [
         {
           key: "shadowsocks",
           value: "shadowsocks"
         },
         {
-          key: "vmess",
-          value: "vmess"
-        },
-        {
-          key: "vless",
-          value: "vless"
-        },
-        {
-          key: "trojan",
-          value: "trojan"
-        },
-        {
-          key: "hysteria",
-          value: "hysteria"
-        }
-      ],
-      allProtocolOptions: [
-        {
-          key: "shadowsocks",
-          value: "shadowsocks"
+          key: "shadowtls",
+          value: "shadowtls"
         },
         {
           key: "vmess",
@@ -594,23 +583,21 @@ export default {
           value: "trojan"
         },
         {
-          key: "socks",
-          value: "socks"
-        },
-        {
-          key: "hysteria",
-          value: "hysteria"
+          key: "hysteria2",
+          value: "hysteria2"
+        }, {
+          key: "tuic",
+          value: "tuic"
         }
       ],
-
 
       allTransitProtocolOptions: [
         {
-          key: "hysteria",
+          key: "hysteria2",
           value: "端口转发"
         },
         {
-          key: "hysteria-out",
+          key: "hysteria2-out",
           value: "协议转发"
         },
 
@@ -645,6 +632,7 @@ export default {
 
       // nationIdOptions关联表数据
       nationIdOptions: [],
+      nodeGroupOptions: [],
       // isonoroffOptions
       isonoroffOptions: [],
       streamSettingsOptions: [
@@ -655,6 +643,21 @@ export default {
         {
           key: "websocket",
           value: "websocket"
+        },
+      ],
+
+      congestionControlOptions: [
+        {
+          key: "cubic",
+          value: "cubic"
+        },
+        {
+          key: "new_reno",
+          value: "new_reno"
+        },
+        {
+          key: "bbr",
+          value: "bbr"
         },
       ],
       // statusOptions字典数据
@@ -803,9 +806,11 @@ export default {
     this.getVpnServerItems()
     this.getVpnNodeNationItems()
     this.getVpnServerNodeNationItems()
+    this.getVpnNodeGroupItems()
     this.getList();
   },
   methods: {
+    listVpnNodeGroup,
     parseTime,
     langShow,
     listVpnNode,
@@ -841,6 +846,11 @@ export default {
     getVpnNodeNationItems() {
       this.getItems(listVpnNodeNation, {pageSize: 10000}).then(res => {
         this.nationIdOptions = this.setItems(res, 'nationId', 'nationName')
+      })
+    },
+    getVpnNodeGroupItems() {
+      this.getItems(listVpnNodeGroup, {pageSize: 10000}).then(res => {
+        this.nodeGroupOptions = this.setItems(res, 'nodeGroupId', 'nodeGroupName')
       })
     },
     //关联vpn_server表选项
@@ -956,6 +966,7 @@ export default {
         clashTransitNodeIds: undefined,
         other: undefined,
         transfers: undefined,
+        streamSettingsCongestionControl: "cubic",
       };
       this.resetForm("form");
     },
@@ -1016,6 +1027,7 @@ export default {
         data.transitProtocol = '' + (data.transitProtocol || '')
         data.frpProtocol = '' + (data.frpProtocol || "")
         data.outNodeId = '' + (data.outNodeId || "")
+        data.nodeGroupId = '' + (data.nodeGroupId || "")
         data.streamSettingsReality = '' + data.streamSettingsReality
         if (copy) {
           data.nodeId = undefined

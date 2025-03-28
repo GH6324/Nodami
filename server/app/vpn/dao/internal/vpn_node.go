@@ -24,58 +24,62 @@ type VpnNodeDao struct {
 
 // VpnNodeColumns defines and stores column names for table vpn_node.
 type VpnNodeColumns struct {
-	NodeId                    string // 节点ID
-	NationId                  string // 地区ID
-	TransitPort               string // 中转服务器端口
-	TransitProtocol           string // 中转服务协议
-	Up                        string // 上行流量
-	Down                      string // 下行流量
-	OtuType                   string // 1默认IP 2指定IP 3指定节点ID
-	OutIp                     string // 出口IP
-	Protocol                  string // 协议
-	VpnPort                   string // VPN 端口
-	Ping                      string // ping 数据
-	Method                    string // 加密方式
-	FrpProtocol               string // 内网穿透协议
-	FrpPort                   string // 内网穿透端口
-	FrpServerId               string // 内网穿透服务器ID
-	ServerId                  string // 服务器ID
-	Other                     string // 注释
-	CreatedAt                 string // 创建时间
-	UpdatedAt                 string // 更新时间
-	TransportProtocol         string
-	StreamSettingsHost        string
-	StreamSettingsPath        string
-	StreamSettingsServiceName string
-	StreamSettingsReality     string
+	NodeId                          string // 节点ID
+	NationId                        string // 地区ID
+	TransitPort                     string // 中转服务器端口
+	TransitProtocol                 string // 中转服务协议
+	Up                              string // 上行流量
+	Down                            string // 下行流量
+	OtuType                         string // 1默认IP 2指定IP 3指定节点ID
+	OutIp                           string // 出口IP
+	Protocol                        string // 协议
+	VpnPort                         string // VPN 端口
+	Ping                            string // ping 数据
+	Method                          string // 加密方式
+	FrpProtocol                     string // 内网穿透协议
+	FrpPort                         string // 内网穿透端口
+	FrpServerId                     string // 内网穿透服务器ID
+	ServerId                        string // 服务器ID
+	Other                           string // 注释
+	CreatedAt                       string // 创建时间
+	UpdatedAt                       string // 更新时间
+	NodeGroupId                     string
+	TransportProtocol               string
+	StreamSettingsHost              string
+	StreamSettingsPath              string
+	StreamSettingsServiceName       string
+	StreamSettingsReality           string
+	StreamSettingsCongestionControl string
 }
 
 // 实例化表结构与字段的对应关系
 var vpnNodeColumns = VpnNodeColumns{
-	NodeId:                    "node_id",
-	NationId:                  "nation_id",
-	TransitPort:               "transit_port",
-	TransitProtocol:           "transit_protocol",
-	Up:                        "up",
-	Down:                      "down",
-	OtuType:                   "otu_type",
-	OutIp:                     "out_ip",
-	Protocol:                  "protocol",
-	VpnPort:                   "vpn_port",
-	Ping:                      "ping",
-	Method:                    "method",
-	FrpProtocol:               "frp_protocol",
-	FrpPort:                   "frp_port",
-	FrpServerId:               "frp_server_id",
-	ServerId:                  "server_id",
-	Other:                     "other",
-	CreatedAt:                 "created_at",
-	UpdatedAt:                 "updated_at",
-	StreamSettingsHost:        "stream_settings_host",
-	StreamSettingsPath:        "stream_settings_path",
-	StreamSettingsServiceName: "stream_settings_service_name",
-	StreamSettingsReality:     "stream_settings_reality",
-	TransportProtocol:         "transport_protocol",
+	NodeId:                          "node_id",
+	NationId:                        "nation_id",
+	TransitPort:                     "transit_port",
+	TransitProtocol:                 "transit_protocol",
+	Up:                              "up",
+	Down:                            "down",
+	OtuType:                         "otu_type",
+	OutIp:                           "out_ip",
+	Protocol:                        "protocol",
+	VpnPort:                         "vpn_port",
+	Ping:                            "ping",
+	Method:                          "method",
+	FrpProtocol:                     "frp_protocol",
+	FrpPort:                         "frp_port",
+	FrpServerId:                     "frp_server_id",
+	ServerId:                        "server_id",
+	Other:                           "other",
+	CreatedAt:                       "created_at",
+	UpdatedAt:                       "updated_at",
+	StreamSettingsHost:              "stream_settings_host",
+	StreamSettingsPath:              "stream_settings_path",
+	StreamSettingsServiceName:       "stream_settings_service_name",
+	StreamSettingsReality:           "stream_settings_reality",
+	StreamSettingsCongestionControl: "stream_settings_congestion_control",
+	TransportProtocol:               "transport_protocol",
+	NodeGroupId:                     "node_group_id",
 }
 
 // NewVpnNodeDao creates and returns a new DAO object for table data access.

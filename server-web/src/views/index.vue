@@ -147,6 +147,7 @@
 
 <script>
 import {getDashboardInfo} from "@/api/system/dashboard";
+import {getCurrentOrigin} from "@/utils";
 
 export default {
   name: "Server",
@@ -172,15 +173,6 @@ export default {
   },
 
   methods: {
-    getCurrentOrigin() {
-      const { protocol, hostname, port } = window.location;
-
-      // 判断是否是默认端口
-      const shouldShowPort = !((protocol === 'http:' && port === '80') ||
-        (protocol === 'https:' && port === '443'));
-
-      return `${protocol}//${hostname}${shouldShowPort ? `:${port}` : ''}`;
-    },
     getCardBackground(key) {
       // 这里可以根据key返回不同的背景图片
       const backgrounds = {
@@ -196,25 +188,7 @@ export default {
       document.execCommand("copy");
 
       // 显示复制成功的提示
-      this.showToast("已复制到剪贴板");
-    },
-    showToast(message) {
-      // 实现toast提示
-      const toast = document.createElement("div");
-      toast.className = "toast-message";
-      toast.textContent = message;
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.classList.add("show");
-      }, 10);
-
-      setTimeout(() => {
-        toast.classList.remove("show");
-        setTimeout(() => {
-          document.body.removeChild(toast);
-        }, 300);
-      }, 3000);
+      this.msgSuccess("已复制到剪贴板");
     },
     getData() {
       getDashboardInfo().then(response => {
@@ -226,7 +200,7 @@ export default {
   },
   mounted() {
     this.getData();
-    this.baseUrl = this.getCurrentOrigin();
+    this.baseUrl = getCurrentOrigin();
   },
   created() {
     this.runTag = setInterval(this.getData, 5000);

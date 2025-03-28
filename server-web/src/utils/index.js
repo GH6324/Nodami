@@ -14,8 +14,8 @@ export function formatDate(cellValue) {
 }
 
 // 或语言字符串解析
-export  function langShow(value) {
-  if (value == "" && !value){
+export function langShow(value) {
+  if (value == "" && !value) {
     return ""
   }
 
@@ -35,14 +35,12 @@ export  function langShow(value) {
     // 如果解析失败（不是 JSON 字符串），直接返回原始值
     v = value;
   }
-  if (!v){
+  if (!v) {
     return value
   }
 
   return v;
 }
-
-
 
 
 /**
@@ -162,12 +160,12 @@ export function param2Obj(url) {
   }
   return JSON.parse(
     '{"' +
-      decodeURIComponent(search)
-        .replace(/"/g, '\\"')
-        .replace(/&/g, '","')
-        .replace(/=/g, '":"')
-        .replace(/\+/g, ' ') +
-      '"}'
+    decodeURIComponent(search)
+      .replace(/"/g, '\\"')
+      .replace(/&/g, '","')
+      .replace(/=/g, '":"')
+      .replace(/\+/g, ' ') +
+    '"}'
   )
 }
 
@@ -246,7 +244,7 @@ export function getTime(type) {
 export function debounce(func, wait, immediate) {
   let timeout, args, context, timestamp, result
 
-  const later = function() {
+  const later = function () {
     // 据上一次触发时间间隔
     const last = +new Date() - timestamp
 
@@ -263,7 +261,7 @@ export function debounce(func, wait, immediate) {
     }
   }
 
-  return function(...args) {
+  return function (...args) {
     context = this
     timestamp = +new Date()
     const callNow = immediate && !timeout
@@ -416,6 +414,18 @@ export function isNumberStr(str) {
   return /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g.test(str)
 }
 
+export function getCurrentOrigin() {
+  const {protocol, hostname, port} = window.location;
+
+  // 判断是否是默认端口
+  const shouldShowPort = !((protocol === 'http:' && port === '80') ||
+    (protocol === 'https:' && port === '443'));
+
+  return `${protocol}//${hostname}${shouldShowPort ? `:${port}` : ''}`;
+}
+
+
+
 
 const ONE_KB = 1024
 const ONE_MB = ONE_KB * 1024
@@ -423,12 +433,12 @@ const ONE_GB = ONE_MB * 1024
 const ONE_TB = ONE_GB * 1024
 const ONE_PB = ONE_TB * 1024
 
-export function sizeFormat(size,dw) {
-  if (!size){
+export function sizeFormat(size, dw) {
+  if (!size) {
     size = 0
   }
 
-  let z  = true
+  let z = true
   if (size < 0) {
     z = false
     size = Math.abs(size)
@@ -436,25 +446,26 @@ export function sizeFormat(size,dw) {
 
   let value = ""
   if (size < 1000) {
-    value =  size.toFixed(0) + ' B'
-  } else if (size < 1000*1000) {
-    value =  (size / ONE_KB).toFixed(2) + ' KB'
-  } else if (size < 1000*1000*1000) {
-    value =  (size / ONE_MB).toFixed(2) + ' MB'
-  } else if (size < 1000*1000*1000*1000) {
-    value =  (size / ONE_GB).toFixed(2) + ' GB'
-  } else if (size < 1000*1000*1000*1000*1000) {
-    value =  (size / ONE_TB).toFixed(2) + ' TB'
+    value = size.toFixed(0) + ' B'
+  } else if (size < 1000 * 1000) {
+    value = (size / ONE_KB).toFixed(2) + ' KB'
+  } else if (size < 1000 * 1000 * 1000) {
+    value = (size / ONE_MB).toFixed(2) + ' MB'
+  } else if (size < 1000 * 1000 * 1000 * 1000) {
+    value = (size / ONE_GB).toFixed(2) + ' GB'
+  } else if (size < 1000 * 1000 * 1000 * 1000 * 1000) {
+    value = (size / ONE_TB).toFixed(2) + ' TB'
   } else {
-    value =  (size / ONE_PB).toFixed(2) + ' PB'
+    value = (size / ONE_PB).toFixed(2) + ' PB'
   }
 
   if (!z) {
-    value = "-"+value
+    value = "-" + value
   }
   return value
 }
-export function  deepEqual(obj1, obj2) {
+
+export function deepEqual(obj1, obj2) {
   if (obj1 === obj2) {
     return true;
   }

@@ -20,23 +20,42 @@ type vpnNodeService struct {
 
 var VpnNodeService = new(vpnNodeService)
 
-func (c *vpnNodeService) Nodes(ctx context.Context, nodeId int, serverId ...int) (nodeModels []*model.VpnNodeInfo, err error) {
+func (c *vpnNodeService) Nodes(ctx context.Context, nodeId, serverId, subscriptionID int) (nodeModels []*model.VpnNodeInfo, err error) {
+
+	var groupIds []int
+	if subscriptionID > 0 {
+		var subscriptionMode model.VpnSubscription
+		err = dao.VpnSubscription.Ctx(ctx).Where(dao.VpnSubscription.Columns.SubscriptionId, subscriptionID).Scan(&subscriptionMode)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal([]byte(subscriptionMode.NodeGroupIds), &groupIds)
+		if err != nil {
+			return nil, err
+		}
+
+	}
 	nodeModels = make([]*model.VpnNodeInfo, 0)
 	m := dao.VpnNode.Ctx(ctx).
 		LeftJoin(dao.VpnServer.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnServer.Table, dao.VpnServer.Columns.ServerId, dao.VpnNode.Table, dao.VpnNode.Columns.ServerId)).
 		LeftJoin(fmt.Sprintf("%s as frpServer", dao.VpnServer.Table), fmt.Sprintf("frpServer.%s=%s.%s", dao.VpnServer.Columns.ServerId, dao.VpnNode.Table, dao.VpnNode.Columns.FrpServerId)).
-		LeftJoin(dao.VpnNodeNation.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnNode.Table, dao.VpnNode.Columns.NationId, dao.VpnNodeNation.Table, dao.VpnNodeNation.Columns.NationId))
+		LeftJoin(dao.VpnNodeNation.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnNode.Table, dao.VpnNode.Columns.NationId, dao.VpnNodeNation.Table, dao.VpnNodeNation.Columns.NationId)).
+		LeftJoin(dao.VpnNodeGroup.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnNode.Table, dao.VpnNode.Columns.NodeGroupId, dao.VpnNodeGroup.Table, dao.VpnNodeGroup.Columns.NodeGroupId))
 
 	m = m.Where(fmt.Sprintf("%s.%s >0 ", dao.VpnNode.Table, dao.VpnNode.Columns.NodeId))
 
-	if serverId != nil && len(serverId) > 0 {
+	if serverId > 0 {
 		m = m.Where(fmt.Sprintf("%s.%s = ? or (%s.%s in (SELECT %s FROM vpn_node_transfer WHERE entrance_server_id = ? or exit_server_id  = ?))",
 			dao.VpnNode.Table,
 			dao.VpnNode.Columns.ServerId,
 			dao.VpnNode.Table,
 			dao.VpnNode.Columns.NodeId,
 			dao.VpnNode.Columns.NodeId,
-		), serverId[0], serverId[0], serverId[0])
+		), serverId, serverId, serverId)
+	}
+
+	if groupIds != nil && len(groupIds) > 0 {
+		m = m.WhereIn(fmt.Sprintf("%s.%s", dao.VpnNodeGroup.Table, dao.VpnNodeGroup.Columns.NodeGroupId), groupIds)
 	}
 
 	if nodeId > 0 {
@@ -74,9 +93,19 @@ func (c *vpnNodeService) Nodes(ctx context.Context, nodeId int, serverId ...int)
 	return
 }
 
-func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxies []*dao.Proxie, err error) {
+func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int, subscriptionID int) (proxies []*dao.Proxie, err error) {
 
-	nodes, err := c.Nodes(ctx, nodeId)
+	subscriptionUUID := ""
+	if subscriptionID > 0 {
+		var subscriptionMode model.VpnSubscription
+		err = dao.VpnSubscription.Ctx(ctx).Where(dao.VpnSubscription.Columns.SubscriptionId, subscriptionID).Scan(&subscriptionMode)
+		if err != nil {
+			return nil, err
+		}
+		subscriptionUUID = subscriptionMode.UUID
+	}
+
+	nodes, err := c.Nodes(ctx, nodeId, 0, subscriptionID)
 	if err != nil {
 		return
 	}
@@ -145,7 +174,11 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxi
 			proxie.Port = node.TransitPort
 		}
 
-		pass := library.Settings.Agent.CommonUUID
+		pass := subscriptionUUID
+		if subscriptionUUID == "" {
+			pass = library.Settings.Agent.CommonUUID
+		}
+
 		if node.Protocol == commonInfo.Protocol_VMess {
 			alterID := 0
 			proxie.AlterID = &alterID
@@ -171,16 +204,41 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxi
 
 		}
 
+		if node.Protocol == commonInfo.Protocol_Shadowtls {
+			proxie.Type = "ss"
+			proxie.Password = commonInfo.GenerateUUIDFromString(library.Settings.Agent.CommonUUID)
+			proxie.Plugin = "shadow-tls"
+			proxie.Cipher = "chacha20-ietf-poly1305"
+			proxie.PluginOpts = &dao.PluginOpts{
+				Host:     node.StreamSettingsHost,
+				Password: commonInfo.ShadowsocksPass(proxie.Cipher, pass),
+				Version:  3,
+			}
+
+		}
+
 		if node.Protocol == commonInfo.Protocol_Socks {
 			proxie.Type = "socks5"
-			proxie.UserName = commonInfo.GetUidNodeIdCodeTOEmail(node.NodeId)
+			proxie.UserName = commonInfo.GetUidNodeIdCodeTOEmail(node.NodeId, subscriptionID)
 			proxie.Password = pass
 		}
 
-		if node.Protocol == commonInfo.Protocol_Hysteria {
+		if node.Protocol == commonInfo.Protocol_Hysteria2 {
 			proxie.Type = "hysteria2"
 			proxie.Password = pass
 			proxie.Sni = "www.bing.com"
+		}
+
+		if node.Protocol == commonInfo.Protocol_Tuic {
+			proxie.Type = "tuic"
+			proxie.UUID = commonInfo.GenerateUUIDFromString(pass)
+			proxie.Password = pass
+			proxie.CongestionController = node.StreamSettingsCongestionControl
+			proxie.TLS = true
+			proxie.ClientFingerprint = "chrome"
+			proxie.ServerName = node.StreamSettingsHost
+			proxie.Sni = node.StreamSettingsHost
+			proxie.Alpn = []string{"h3", "hq"}
 		}
 
 		proxies = append(proxies, proxie)
@@ -189,9 +247,9 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int) (proxi
 	return
 }
 
-func (c *vpnNodeService) GetAppClashConfig(ctx context.Context) (config *dao.ClashConfig, err error) {
+func (c *vpnNodeService) GetAppClashConfig(ctx context.Context, subscriptionID int) (config *dao.ClashConfig, err error) {
 
-	proxies, err := c.GetClashProxies(ctx, 0)
+	proxies, err := c.GetClashProxies(ctx, 0, subscriptionID)
 	if err != nil {
 		return
 	}
