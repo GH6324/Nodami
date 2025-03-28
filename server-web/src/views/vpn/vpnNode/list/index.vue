@@ -373,13 +373,32 @@
             </el-form-item>
             <el-form-item label="协议" prop="protocol">
               <el-select size="small" v-model="form.protocol" placeholder="请选择协议" style="width: 150px" @clear="()=>{
-                             form.transportProtocol = undefined
-                             form.method = undefined
+                             if (form.protocol != 'vmess' && form.protocol != 'vless' && form.protocol != 'trojan') {
+                                form.transportProtocol = undefined
+                             }else if (!form.transportProtocol){
+                               form.transportProtocol = 'grpc'
+                             }
+
+                             if (form.protocol != 'shadowsocks') {
+                                form.method = undefined
+                             }else if (!form.method){
+                               form.method = 'chacha20-ietf-poly1305'
+                             }
+
 
                          }"
                          @change="function(v){
-                             form.transportProtocol = undefined
-                             form.method = undefined
+                            if (form.protocol != 'vmess' && form.protocol != 'vless' && form.protocol != 'trojan') {
+                                form.transportProtocol = undefined
+                             }else if (!form.transportProtocol){
+                               form.transportProtocol = 'grpc'
+                             }
+
+                             if (form.protocol != 'shadowsocks') {
+                                form.method = undefined
+                             }else if (!form.method){
+                               form.method = 'chacha20-ietf-poly1305'
+                             }
 
                          }">
                 <el-option
