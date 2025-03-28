@@ -31,7 +31,7 @@
 
 ### 快速安装 一键安装
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YoyoCrafts/Nodami/refs/heads/nodami/docker/install.sh -o install.sh && sudo bash install.sh
+curl -fsSL "https://raw.githubusercontent.com/YoyoCrafts/Nodami/refs/heads/nodami/docker/install.sh?t=$(date +%s)" -o install.sh && sudo bash install.sh
 ```
 
 ---
