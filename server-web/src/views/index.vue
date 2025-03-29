@@ -5,7 +5,7 @@
         <div class="project-info">
           <h1 class="project-title">Nodami — 自建 梯子节点，从未如此简单</h1>
           <p class="project-description">Nodami是一个开源的代理服务端管理平台，支持自动部署和集中管理多服务器、多节点，兼容
-            Shadowsocks / Vmess / Hysteria 协议，专为简化自建梯子节点而设计，无需复杂命令，可视化操作实现</p>
+            Shadowsocks / Vmess / Hysteria 等协议，专为简化自建梯子节点而设计，无需复杂命令，可视化操作实现</p>
 
           <div class="project-links">
             <a href="https://github.com/YoyoCrafts/Nodami.git" class="github-link" target="_blank">
