@@ -206,12 +206,12 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int, subscr
 
 		if node.Protocol == commonInfo.Protocol_Shadowtls {
 			proxie.Type = "ss"
-			proxie.Password = commonInfo.GenerateUUIDFromString(library.Settings.Agent.CommonUUID)
+			proxie.Password = pass
 			proxie.Plugin = "shadow-tls"
 			proxie.Cipher = "chacha20-ietf-poly1305"
 			proxie.PluginOpts = &dao.PluginOpts{
 				Host:     node.StreamSettingsHost,
-				Password: commonInfo.ShadowsocksPass(proxie.Cipher, pass),
+				Password: commonInfo.GenerateUUIDFromString(library.Settings.Agent.CommonUUID),
 				Version:  3,
 			}
 
