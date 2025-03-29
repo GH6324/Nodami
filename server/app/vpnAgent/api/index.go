@@ -101,6 +101,6 @@ func (c vpnAgentApi) Down(r *ghttp.Request) {
 	rawPath := r.GetString("fileName")
 	fileName := strings.Split(rawPath, "?")[0] // /agent_sing_box.zip
 
-	content, _ := os.ReadFile("./docker/bao/nginx/wwwroot/agent_server/" + fileName)
+	content, _ := os.ReadFile("../docker/bao/nginx/wwwroot/agent_server/" + fileName)
 	r.Response.WriteExit(string(content))
 }

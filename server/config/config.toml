@@ -24,6 +24,12 @@ server = "tcp://10.211.55.13:508"
 user=""
 pass=""
 
+[debug]
+ip = "13.200.154.248"
+mqtt=22508
+api=18200
+
+
 # Logger.
 [logger]
 Path = "./data/log/logger"

@@ -148,16 +148,24 @@ func SetSettings(jsonData []byte) error {
 	fmt.Printf("\nShortIds:%v\n", strings.Join(Settings.Peality.ShortIds, "\",\""))
 	fmt.Printf("\nPrivate:%v\n", Settings.Peality.Private)
 	fmt.Printf("\nPublic:%v\n", Settings.Peality.Public)
+
 	return nil
 
 }
 
 func GetAgentAPI() string {
+	if g.Cfg().GetString("debug.ip") != "" {
+		return fmt.Sprintf("http://%s:%d", g.Cfg().GetString("debug.ip"), g.Cfg().GetInt("debug.api"))
+	}
+
 	return fmt.Sprintf("http://%s:%d", Settings.Agent.ServerIp, 18080)
 	//return fmt.Sprintf("http://%s:%d", "13.200.154.248", 18200)
 }
 
 func GetAgentMqtt() string {
+	if g.Cfg().GetString("debug.ip") != "" {
+		return fmt.Sprintf("tcp://%s:%d", g.Cfg().GetString("debug.ip"), g.Cfg().GetInt("debug.mqtt"))
+	}
 	return fmt.Sprintf("tcp://%s:%d", Settings.Agent.ServerIp, 1883)
 	//return fmt.Sprintf("tcp://%s:%d", "13.200.154.248", 11190)
 }
