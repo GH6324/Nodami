@@ -52,11 +52,28 @@ install_docker() {
     echo "---> 你已经安装了Docker"
   fi
 
-   if ! command -v docker-compose >/dev/null 2>&1; then
-       echo "docker-compose 未安装，正在安装..."
-       sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-       chmod +x /usr/local/bin/docker-compose
-  fi
+
+   if ! docker compose version >/dev/null 2>&1; then
+       echo "docker compose 未安装或未启用，尝试通过内置插件安装..."
+       sudo apt-get update
+       if sudo apt-get install -y docker-compose-plugin; then
+           echo "docker compose 插件安装成功。"
+       else
+           echo "内置插件安装失败，尝试旧版独立二进制方式安装..."
+           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+                -o /usr/local/bin/docker-compose
+           sudo chmod +x /usr/local/bin/docker-compose
+
+           if docker-compose --version >/dev/null 2>&1; then
+               echo "旧版docker-compose安装成功。"
+           else
+               echo "docker-compose安装失败，请检查网络或手动安装。"
+               exit 1
+           fi
+       fi
+   else
+       echo "docker compose 已安装。"
+   fi
 }
 
 # 检查Git是否安装
@@ -93,7 +110,7 @@ clone_or_update_repo() {
 # 安装 Nodami 并确认启动状态
 install_nodami(){
   cd "$REPO_DIR/docker/bao" || exit
-  docker-compose up -d
+  docker compose up -d
 
   echo "🚀 正在启动 Nodami，请稍候..."
   for i in {1..120}; do
@@ -118,7 +135,7 @@ install_nodami(){
 uninstall_nodami(){
   echo "❌ 正在卸载 Nodami..."
   cd "$REPO_DIR/docker/bao" || exit
-  docker-compose down
+  docker compose down
   docker system prune -af
   rm -rf "$REPO_DIR"
   echo "✅ Nodami 已彻底卸载。"
@@ -127,7 +144,7 @@ uninstall_nodami(){
 reinstall_nodami(){
   echo "❌ 正在卸载 Nodami..."
   cd "$REPO_DIR/docker/bao" || exit
-  docker-compose down
+  docker compose down
   rm -rf "$REPO_DIR/docker/bao/mysql"
   install_nodami
 }
@@ -143,7 +160,7 @@ main() {
       case $choice in
           1)
               cd "$REPO_DIR/docker/bao" || exit
-              docker-compose restart
+              docker compose restart
               echo "✅ Nodami 已重启完成。"
               ;;
           2)
