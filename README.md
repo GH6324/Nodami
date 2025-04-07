@@ -34,11 +34,14 @@
 
 ### 一键安装
 
-执行以下命令快速安装 Nodami：
+执行以下命令快速安装 Nodami： 
 ```bash
 curl -fsSL "https://raw.githubusercontent.com/YoyoCrafts/Nodami/refs/heads/nodami/docker/install.sh?t=$(date +%s)" -o install.sh && sudo bash install.sh
 ```
-
+### 安装和使用教程
+- [点击观看视频教程](https://youtu.be/k6jXrBDpisU)
+- 
+- [点击观看文本教程](./Tutorial.md)
 ---
 
 ## 🎯 在线演示
