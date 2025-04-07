@@ -84,8 +84,8 @@ downAgent() {
   else
       # 如果未安装 zip，则尝试安装
       echo_content skyBlue "unzip is not installed. Installing..."
-      $isSudo ${package_manager} update
-      $isSudo ${package_manager} install -y unzip
+      ${package_manager} update
+      ${package_manager} install -y unzip
       if [ $? -eq 0 ]; then
           echo_content skyBlue "unzip installed successfully."
       else
@@ -164,33 +164,35 @@ isInChina() {
 
 install_docker_china(){
 
-  echo_content skyBlue "---> bash <({{server.docker}})  --source mirrors.aliyun.com/docker-ce  --source-registry registry.cn-hangzhou.aliyuncs.com --ignore-backup-tips --install-latested true"
-  $isSudo bash <({{server.docker}})  --source mirrors.aliyun.com/docker-ce  --source-registry registry.cn-hangzhou.aliyuncs.com --ignore-backup-tips --install-latested true
+  echo_content skyBlue "---> bash <({{server.docker}})  --source mirrors.aliyun.com/docker-ce  --source-registry registry.cn-hangzhou.aliyuncs.com --ignore-backup-tips --install-latested true --protocol http"
+  bash <({{server.docker}})  --source mirrors.aliyun.com/docker-ce  --source-registry registry.cn-hangzhou.aliyuncs.com --ignore-backup-tips --install-latested true --protocol http
 
   if ! [[ $(docker -v 2>/dev/null) ]]; then
     export DOWNLOAD_URL="https://mirrors.tuna.tsinghua.edu.cn/docker-ce"
     echo_content skyBlue "---> sh <(curl -fsSL https://get.docker.com/ | sudo -E sh)"
-    $isSudo sh <(curl -fsSL https://get.docker.com/ | sudo -E sh)
+    sh <(curl -fsSL https://get.docker.com/ | sudo -E sh)
   fi
 }
 
 install_docker_common(){
-    echo_content skyBlue "---> sh <(curl -sL https://get.docker.com)"
-    $isSudo sh <(curl -sL https://get.docker.com)
+    if ! [[ $(docker -v 2>/dev/null) ]]; then
+            echo_content skyBlue "---> bash <(curl -sL https://linuxmirrors.cn/docker.sh)  --source repo.huaweicloud.com/docker-ce  --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true"
+            bash <(curl -sL https://linuxmirrors.cn/docker.sh)  --source repo.huaweicloud.com/docker-ce  --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
+    fi
 
     if ! [[ $(docker -v 2>/dev/null) ]]; then
            echo_content skyBlue "---> curl -sSL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -"
-           $isSudo curl -sSL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -
+           curl -sSL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -
     fi
 
     if ! [[ $(docker -v 2>/dev/null) ]]; then
            echo_content skyBlue "---> curl -sSL https://get.daocloud.io/docker | sh"
-           $isSudo curl -sSL https://get.daocloud.io/docker | sh
+           curl -sSL https://get.daocloud.io/docker | sh
     fi
 
     if ! [[ $(docker -v 2>/dev/null) ]]; then
-      echo_content skyBlue "---> bash <({{server.docker}})  --source repo.huaweicloud.com/docker-ce  --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true"
-      $isSudo bash <({{server.docker}})  --source repo.huaweicloud.com/docker-ce  --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true
+           echo_content skyBlue "---> sh <(curl -sL https://get.docker.com)"
+           sh <(curl -sL https://get.docker.com)
     fi
 }
 
@@ -202,7 +204,7 @@ install_docker() {
     echo_content green "---> 安装Docker"
     # 关闭防火墙
     if [[ "$(firewall-cmd --state 2>/dev/null)" == "running" ]]; then
-      $isSudo systemctl stop firewalld.service && $isSudo systemctl disable firewalld.service
+      systemctl stop firewalld.service && systemctl disable firewalld.service
     fi
 
     if [ $inChina -eq 0 ]; then
@@ -220,11 +222,11 @@ install_docker() {
 
     echo_content skyBlue "---> Docker安装完成"
 
-    $isSudo iptables -A INPUT -p tcp --dport 10000:60000 -j ACCEPT
-    $isSudo iptables -A INPUT -p udp --dport 10000:60000 -j ACCEPT
+    iptables -A INPUT -p tcp --dport 10000:60000 -j ACCEPT
+    iptables -A INPUT -p udp --dport 10000:60000 -j ACCEPT
     timedatectl set-timezone Asia/Shanghai
-    $isSudo systemctl enable docker
-    $isSudo systemctl restart docker
+    systemctl enable docker
+    systemctl restart docker
 
   else
 
@@ -233,7 +235,7 @@ install_docker() {
       echo "Docker is running."
     else
       echo "Docker is not running. Enabling and starting Docker..."
-      $isSudo systemctl enable docker && $isSudo systemctl restart docker
+      systemctl enable docker && systemctl restart docker
     fi
     echo_content skyBlue "---> 你已经安装了Docker"
   fi
@@ -250,7 +252,7 @@ install_agent() {
   # 创建配置目录
   echo_content skyBlue "---> 创建配置目录"
   rm -rf "$directory" "$directory_temp"
-  $isSudo mkdir -p "$directory"
+  mkdir -p "$directory"
 
   # 写入配置文件
   echo_content skyBlue "---> 写入配置文件"
@@ -319,31 +321,31 @@ EOF
 
   # 停止并删除旧容器
   echo_content skyBlue "---> 停止并删除旧容器"
-  $isSudo docker stop $IMAGE >/dev/null 2>&1
-  $isSudo docker rm $IMAGE >/dev/null 2>&1
+  docker stop $IMAGE >/dev/null 2>&1
+  docker rm $IMAGE >/dev/null 2>&1
 
   # 运行或重启容器
-  if [[ -z $($isSudo docker ps -a -q -f "name=^${IMAGE}$") ]]; then
+  if [[ -z $(docker ps -a -q -f "name=^${IMAGE}$") ]]; then
     echo_content skyBlue "---> 启动容器"
-    $isSudo docker run -d --name $IMAGE   -e TZ=Asia/Shanghai   --restart always   --network=host  -v "$AgentPath":/app  $IMAGE
+    docker run -d --name $IMAGE   -e TZ=Asia/Shanghai   --restart always   --network=host  -v "$AgentPath":/app  $IMAGE
     #docker run -d --name vlink_agent   -e TZ=Asia/Shanghai   --restart always   --network=host   -v /root/vlink_new:/app  vlink_agent
   else
      echo_content skyBlue "---> 重启容器"
-    $isSudo docker restart $IMAGE
+    docker restart $IMAGE
   fi
 
 #  OLD_IMAGE="fendou_agent"
-#  if [[ -z $($isSudo docker ps -a -q -f "name=^${OLD_IMAGE}$") ]]; then
+#  if [[ -z $(docker ps -a -q -f "name=^${OLD_IMAGE}$") ]]; then
 #    echo_content skyBlue "---> RM fendou_agent"
-#    $isSudo docker stop fendou_agent
-#    $isSudo docker rm fendou_agent
+#    docker stop fendou_agent
+#    docker rm fendou_agent
 #  fi
 
   # 检查容器是否正常运行
-  if [[ -n $($isSudo docker ps -q -f "name=^${IMAGE}$" -f "status=running") ]]; then
+  if [[ -n $(docker ps -q -f "name=^${IMAGE}$" -f "status=running") ]]; then
     echo_content skyBlue "---> agent安装完成"
   else
-    $isSudo docker ps
+    docker ps
     echo_content red "---> agent安装失败或运行异常,请尝试修复或卸载重装"
     exit 0
   fi
@@ -422,15 +424,15 @@ install() {
   fi
 
   if [[ "${package_manager}" != 'yum' && "${package_manager}" != 'dnf' ]]; then
-    $isSudo ${package_manager} update -y
+    ${package_manager} update -y
   fi
 
   packages=(curl wget tar lsof systemd)
   # 遍历程序列表并检查是否安装
   for pkg in "${packages[@]}"; do
-      if ! $isSudo ${package_manager} $pkg &>/dev/null; then
+      if ! ${package_manager} $pkg &>/dev/null; then
           echo "$pkg is not installed. Installing..."
-          $isSudo ${package_manager} install -y $pkg
+          ${package_manager} install -y $pkg
       else
           echo "$pkg is already installed."
       fi
@@ -525,16 +527,16 @@ swap_size=$(free | grep -i swap | awk '{print $2}')
 if [ $swap_size -eq 0 ]; then
     echo_content skyBlue "没有检测到交换空间，正在创建1GB的交换文件..."
     # 创建一个1GB的交换文件
-    $isSudo fallocate -l 1G /swapfile
-    $isSudo chmod 600 /swapfile
-    $isSudo mkswap /swapfile
-    $isSudo swapon /swapfile
+    fallocate -l 1G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
 
     # 使交换文件永久化
     echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
     echo_content skyBlue "交换文件创建成功。"
-    $isSudo sysctl vm.swappiness=80
+    sysctl vm.swappiness=80
 else
     echo_content skyBlue "已存在交换空间。"
 fi
@@ -582,28 +584,15 @@ main() {
 
 
 
-  $isSudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+  ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
   check_and_set_kernel_param "kern.ipc.maxsockbuf" "3014656"
   install
   export QUIC_GO_DISABLE_ECN=true
-#  systemctl_enable
   install_bbr
   install_docker
   install_swap
   install_agent
 
-
-  $isSudo iptables -A INPUT -p tcp --dport 1443 -j ACCEPT
-  $isSudo iptables -A INPUT -p udp --dport 1443 -j ACCEPT
-  $isSudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-  $isSudo iptables -A INPUT -p udp --dport 80 -j ACCEPT
-  $isSudo iptables -A INPUT -p tcp --dport 1700:1702 -j ACCEPT
-  $isSudo iptables -A INPUT -p udp --dport 1700:1702 -j ACCEPT
-  $isSudo iptables -A INPUT -p tcp --dport 10000:60000 -j ACCEPT
-  $isSudo iptables -A INPUT -p udp --dport 10000:60000 -j ACCEPT
-  $isSudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
-  $isSudo iptables -A INPUT -p udp --dport 8080 -j ACCEPT
-  $isSudo iptables -A INPUT -p udp --dport 6060 -j ACCEPT
 }
 
 isInChina
