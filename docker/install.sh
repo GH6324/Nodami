@@ -184,7 +184,7 @@ install_nodami() {
         if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/client/subscription | grep -q "200"; then
             echo_content green "Nodami 启动成功！"
             SERVER_IP=$(curl -s ifconfig.me)
-            echo_content blue "后台地址：http://$SERVER_IP:18080"
+            echo_content green "后台地址：http://$SERVER_IP:18080"
             echo_content green "默认账号：admin"
             echo_content green "默认密码：123456"
             echo_content yellow "请登录后立即修改默认密码。"
