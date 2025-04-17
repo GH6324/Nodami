@@ -48,11 +48,11 @@ install_docker() {
 # 安装 Docker 的不同方法
 install_docker_method() {
     # 尝试多个安装方式
-    install_with_huawei_mirror || install_with_get_docker || install_with_aliyun_mirror
-
-    # 如果所有方法都失败，则退出脚本
-    echo_content red "Docker 安装失败，脚本终止！"
-    exit 1
+    if ! install_with_huawei_mirror && ! install_with_get_docker && ! install_with_aliyun_mirror; then
+        # 如果所有方法都失败，则退出脚本
+        echo_content red "Docker 安装失败，脚本终止！请尝试手动安装docker"
+        exit 1
+    fi
 }
 
 # 使用华为镜像源安装 Docker
@@ -64,7 +64,6 @@ install_with_huawei_mirror() {
         echo_content green "使用华为镜像源安装 Docker 成功。"
         return 0
     else
-        echo_content red "华为镜像源安装 Docker 失败。"
         return 1
     fi
 }
@@ -78,7 +77,6 @@ install_with_get_docker() {
         echo_content green "使用 get.docker.com 安装 Docker 成功。"
         return 0
     else
-        echo_content red "get.docker.com 安装 Docker 失败。"
         return 1
     fi
 }
@@ -92,7 +90,6 @@ install_with_aliyun_mirror() {
         echo_content green "使用阿里云镜像源安装 Docker 成功。"
         return 0
     else
-        echo_content red "阿里云镜像源安装 Docker 失败。"
         return 1
     fi
 }
