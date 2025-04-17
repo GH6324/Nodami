@@ -59,7 +59,7 @@ install_docker_method() {
 install_with_huawei_mirror() {
     echo_content skyBlue "---> 使用华为镜像源安装 Docker..."
     curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh
-    sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true
+    sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
     if docker -v &>/dev/null; then
         echo_content green "使用华为镜像源安装 Docker 成功。"
         return 0
