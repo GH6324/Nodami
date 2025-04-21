@@ -22,6 +22,20 @@ DOWNLOAD_URL="$DOWNLOAD_ROOT/$ZIP_NAME"
 PKG_LIST=(curl wget tar lsof systemd)
 DNS_ARRAY=( {{dnsServers}} )         # ← 模板占位，空也没问题
 
+
+PKG_MGR=""
+if command -v apt-get &>/dev/null; then
+  PKG_MGR="apt-get"
+elif command -v yum &>/dev/null; then
+  PKG_MGR="yum"
+elif command -v dnf &>/dev/null; then
+  PKG_MGR="dnf"
+else
+  echo -e "\e[31m无法识别系统包管理器，脚本终止。\e[0m"
+  exit 1
+fi
+
+
 ### ========= 彩色输出 ========= ###
 cecho() {
   local color=$1; shift
@@ -38,27 +52,14 @@ cecho() {
 ### ========= 基础工具 ========= ###
 need_root() { [ "$(id -u)" -eq 0 ] || { cecho red "请用 root 运行脚本"; exit 1; }; }
 
-pkg_mgr() {
-  command -v yum       && echo yum  && return
-  command -v dnf       && echo dnf  && return
-  command -v apt       && echo apt  && return
-  command -v apt-get   && echo apt-get
-}
+
 
 install_pkgs() {
-  local mgr; mgr=$(pkg_mgr)
-
-  # ---------- 更新仓库 ----------
-  case "$mgr" in
-    yum|dnf)     $mgr -y update ;;
-    apt|apt-get) $mgr update ;;
-  esac
-
   # ---------- 装缺失工具 ----------
   for p in "${PKG_LIST[@]}"; do
     command -v "$p" &>/dev/null && continue
     cecho skyBlue "安装 $p"
-    $mgr install -y "$p"
+    $PKG_MGR install -y "$p"
   done
 }
 
@@ -103,8 +104,7 @@ quick_update() {
 download_agent_zip() {
   command -v unzip &>/dev/null || {
     cecho skyBlue "安装 unzip"
-    local mgr; mgr=$(pkg_mgr)
-    $mgr install -y unzip
+    $PKG_MGR install -y unzip
   }
 
   # -- ① 如果已存在同名 zip 且解压目录有效，直接返回 --------------------------
