@@ -117,137 +117,14 @@ func (c *vpnNodeService) GetClashProxies(ctx context.Context, nodeId int, subscr
 	proxies = make([]*dao.Proxie, 0)
 
 	for _, node := range nodes {
-		proxie := &dao.Proxie{
-			Name:           fmt.Sprintf("%s:%d", node.NationName, node.NodeId),
-			UDP:            true,
-			Port:           node.VpnPort,
-			Server:         node.ServerIp,
-			SkipCertVerify: true,
-		}
 
-		if node.TransportProtocol != "" && (node.Protocol == commonInfo.Protocol_VMess || node.Protocol == commonInfo.Protocol_VLess || node.Protocol == commonInfo.Protocol_Trojan) {
-
-			proxie.TLS = true
-			proxie.ClientFingerprint = "chrome"
-			proxie.ServerName = node.StreamSettingsHost
-			proxie.Sni = node.StreamSettingsHost
-
-			if node.TransportProtocol == "websocket" {
-				proxie.Network = "ws"
-				proxie.WsOpts = &dao.WsOpts{}
-				proxie.WsOpts.Path = node.StreamSettingsPath
-				proxie.WsOpts.Headers = map[string]interface{}{
-					"Host": node.StreamSettingsHost,
-				}
-			}
-
-			if node.TransportProtocol == "grpc" {
-				proxie.Network = "grpc"
-				proxie.GrpcOpts = &dao.GrpcOpts{
-					GrpcServiceName: node.StreamSettingsServiceName,
-				}
-
-				if node.StreamSettingsReality == 1 && node.Protocol != commonInfo.Protocol_VMess {
-					proxie.RealityOpts = &dao.RealityOpts{
-						PublicKey: library.Settings.Peality.Public,
-						ShortId:   library.Settings.Peality.ShortIds[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(library.Settings.Peality.ShortIds))],
-					}
-				}
-			}
-		}
-
-		mationNameMap := make(map[string]string)
-		r := json.Unmarshal([]byte(node.NationName), &mationNameMap)
-		if r == nil {
-			if v, ok := mationNameMap["zh_cn"]; ok {
-				proxie.Name = fmt.Sprintf("%s#%d", v, node.NodeId)
-			}
-		}
-
-		if node.FrpServerId > 0 && node.FrpProtocol != "" {
-			proxie.Server = node.FrpServerIp
-			proxie.Port = node.FrpPort
-		}
-
-		if len(node.Transfers) > 0 && node.TransitProtocol != "" {
-			proxie.Server = node.Transfers[0].EntranceServerIp
-			proxie.Port = node.TransitPort
-		}
-
-		pass := subscriptionUUID
-		if subscriptionUUID == "" {
-			pass = library.Settings.Agent.CommonUUID
-		}
-
-		if node.Protocol == commonInfo.Protocol_VMess {
-			alterID := 0
-			proxie.AlterID = &alterID
-			proxie.Type = "vmess"
-			proxie.Cipher = "auto"
-			proxie.UUID = pass
-		}
-
-		if node.Protocol == commonInfo.Protocol_VLess {
-			proxie.Type = "vless"
-			proxie.UUID = pass
-		}
-
-		if node.Protocol == commonInfo.Protocol_Trojan {
-			proxie.Type = "trojan"
-			proxie.Password = pass
-		}
-
-		if node.Protocol == commonInfo.Protocol_Shadowsocks {
-			proxie.Type = "ss"
-			proxie.Cipher = node.Method
-			proxie.Password = commonInfo.ShadowsocksPass(proxie.Cipher, pass)
-
-		}
-
-		if node.Protocol == commonInfo.Protocol_Shadowtls {
-			proxie.Type = "ss"
-			proxie.Password = pass
-			proxie.Plugin = "shadow-tls"
-			proxie.Cipher = "chacha20-ietf-poly1305"
-			proxie.PluginOpts = &dao.PluginOpts{
-				Host:     node.StreamSettingsHost,
-				Password: commonInfo.GenerateUUIDFromString(library.Settings.Agent.CommonUUID),
-				Version:  3,
-			}
-
-		}
-
-		if node.Protocol == commonInfo.Protocol_Socks {
-			proxie.Type = "socks5"
-			proxie.UserName = commonInfo.GetUidNodeIdCodeTOEmail(node.NodeId, subscriptionID)
-			proxie.Password = pass
-		}
-
-		if node.Protocol == commonInfo.Protocol_Hysteria2 {
-			proxie.Type = "hysteria2"
-			proxie.Password = pass
-			proxie.Sni = "www.bing.com"
-		}
-
-		if node.Protocol == commonInfo.Protocol_Tuic {
-			proxie.Type = "tuic"
-			proxie.UUID = commonInfo.GenerateUUIDFromString(pass)
-			proxie.Password = pass
-			proxie.CongestionController = node.StreamSettingsCongestionControl
-			proxie.TLS = true
-			proxie.ClientFingerprint = "chrome"
-			proxie.ServerName = node.StreamSettingsHost
-			proxie.Sni = node.StreamSettingsHost
-			proxie.Alpn = []string{"h3", "hq"}
-		}
-
-		proxies = append(proxies, proxie)
+		proxies = append(proxies, c.GetClashProxie(node, subscriptionID, subscriptionUUID))
 	}
 
 	return
 }
 
-func (c *vpnNodeService) GetClashProxie(node *model.VpnNodeInfo, subscriptionID int, subscriptionUUID string) (proxie *dao.Proxie, err error) {
+func (c *vpnNodeService) GetClashProxie(node *model.VpnNodeInfo, subscriptionID int, subscriptionUUID string) (proxie *dao.Proxie) {
 	proxie = &dao.Proxie{
 		Name:           fmt.Sprintf("%s:%d", node.NationName, node.NodeId),
 		UDP:            true,
@@ -306,8 +183,10 @@ func (c *vpnNodeService) GetClashProxie(node *model.VpnNodeInfo, subscriptionID 
 	}
 
 	pass := subscriptionUUID
+	email := commonInfo.GetUidNodeIdCodeTOEmail(node.NodeId, subscriptionID)
 	if subscriptionUUID == "" {
 		pass = library.Settings.Agent.CommonUUID
+		email = library.Settings.Agent.CommonUUID + "@gmail.com"
 	}
 
 	if node.Protocol == commonInfo.Protocol_VMess {
@@ -350,7 +229,7 @@ func (c *vpnNodeService) GetClashProxie(node *model.VpnNodeInfo, subscriptionID 
 
 	if node.Protocol == commonInfo.Protocol_Socks {
 		proxie.Type = "socks5"
-		proxie.UserName = commonInfo.GetUidNodeIdCodeTOEmail(node.NodeId, subscriptionID)
+		proxie.UserName = email
 		proxie.Password = pass
 	}
 

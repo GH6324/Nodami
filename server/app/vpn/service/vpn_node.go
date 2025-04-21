@@ -157,7 +157,7 @@ func (s *vpnNode) GetInfoById(ctx context.Context, nodeId int) (info *model.VpnN
 		return
 	}
 
-	info.Proxie, err = vpnClient.VpnNodeService.GetClashProxie(info, 0, library.Settings.Agent.CommonUUID)
+	info.Proxie = vpnClient.VpnNodeService.GetClashProxie(info, 0, library.Settings.Agent.CommonUUID)
 	return
 }
 
