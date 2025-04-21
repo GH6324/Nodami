@@ -9,7 +9,7 @@ CONFIG_DIR="$AGENT_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/settings.yml"
 TEMP_DIR="$AGENT_DIR/temp"
 
-ZIP_NAME="agent_sing_box.zip?v1.0.4"
+ZIP_NAME="agent_sing_box.zip?v1.0.3"
 ZIP_PATH="$PWD/$ZIP_NAME"
 
 IMAGE_NAME="vlink_agent"
@@ -94,7 +94,7 @@ quick_update() {
   cecho green "检测到 $CONTAINER 已存在，执行快速更新..."
   download_agent_zip
   write_agent_config
-  docker restart "$CONTAINER"
+  run_container
   cecho green "配置已刷新并重启完成"
   exit 0
 }
@@ -155,14 +155,14 @@ write_agent_config() {
   mkdir -p "$CONFIG_DIR" "$TEMP_DIR"
 cat > "$CONFIG_FILE" <<'EOF'
 settings:
-  logLevel: error
+  logLevel: info
   serverId: {{settings.serverId}}
   serverApiUrl: {{settings.serverApiUrl}}
   mqttServer: {{settings.mqttServer}}
   mqttUser: {{settings.mqttUser}}
   mqttPass: {{settings.mqttPass}}
   mqttPort: {{settings.mqttPort}}
-  agentLogFile: ./temp/agent.log
+#  agentLogFile: ./temp/agent.log
   authorizedCode: b97c8f99-480f-4651-b706-5db648c10a53
   logShield: wifi.vivo.com.cn,www.gstatic.cn
   commonUuid: {{xrayCommon.commonUuid}}
@@ -175,17 +175,17 @@ hysteriaCommon:
   hysteriaCore: false
 
 singBoxCommon:
-  logFile: ./temp/singBox.log
-  logLevel: error
+#  logFile: ./temp/singBox.log
+  logLevel: info
   hysteria2CommonPort: 2063
   apiPort: 2703
 
 frpCommon:
   startFrps: {{frpCommon.startFrps}}
-  frpcLogFile: ./temp/frpc.log
-  frpsLogFile: ./temp/frps.log
+#  frpcLogFile: ./temp/frpc.log
+#  frpsLogFile: ./temp/frps.log
   tcpMux: true
-  logLevel: error
+  logLevel: info
   frpToken: 1wwewxz
   frpTls: false
   bindPort: 2700
@@ -294,11 +294,15 @@ build_image() {
 run_container() {
   docker stop "$CONTAINER" &>/dev/null || true
   docker rm   "$CONTAINER" &>/dev/null || true
+
   docker run -d --name "$CONTAINER" \
     -e TZ=Asia/Shanghai \
     --restart always \
     --network host \
     -v "$AGENT_DIR":/app \
+    --log-driver json-file \
+    --log-opt max-size=5m \
+    --log-opt max-file=3 \
     "${IMAGE_NAME}:${IMAGE_TAG}"
 }
 
