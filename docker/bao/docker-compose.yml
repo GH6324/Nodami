@@ -65,6 +65,11 @@ services:
     restart: always
     environment:
       TZ: Asia/Shanghai
+    depends_on:
+      - nodami-mysql
+      - nodami-redis
+      - nodami-emqx
+      - nodami-server
     networks:
       - nodami
 
