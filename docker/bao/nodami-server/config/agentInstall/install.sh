@@ -39,21 +39,14 @@ cecho() {
 need_root() { [ "$(id -u)" -eq 0 ] || { cecho red "请用 root 运行脚本"; exit 1; }; }
 
 pkg_mgr() {
-  command -v yum       && echo yum  && return
-  command -v dnf       && echo dnf  && return
-  command -v apt       && echo apt  && return
-  command -v apt-get   && echo apt-get
+  command -v apt-get   && echo apt-get && return
+  command -v yum       && echo yum     && return
+  command -v dnf       && echo dnf     && return
 }
+
 
 install_pkgs() {
   local mgr; mgr=$(pkg_mgr)
-
-  # ---------- 更新仓库 ----------
-  case "$mgr" in
-    yum|dnf)     $mgr -y update ;;
-    apt|apt-get) $mgr update ;;
-  esac
-
   # ---------- 装缺失工具 ----------
   for p in "${PKG_LIST[@]}"; do
     command -v "$p" &>/dev/null && continue
