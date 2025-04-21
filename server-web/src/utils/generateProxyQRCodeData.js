@@ -34,7 +34,7 @@ function dig(obj /*, k1, k2, … */) {
 /*─────────────────────────────────────────────────────────────────────────────*
  *  Main Converter
  *────────────────────────────────────────────────────────────────────────────*/
-function generateProxyQRCodeData(proxy) {
+export function  generateProxyQRCodeData(proxy) {
   if (!proxy || typeof proxy !== 'object') throw new Error('proxy must be an object');
 
   var type   = String(pick(proxy, 'type') || '').toLowerCase();
@@ -185,6 +185,3 @@ function generateProxyQRCodeData(proxy) {
   throw new Error('Unsupported protocol type: ' + type);
 }
 
-/*─────────────────────────────────────────────────────────────────────────────*/
-if (typeof module !== 'undefined') module.exports = { generateProxyQRCodeData };
-export default generateProxyQRCodeData;
