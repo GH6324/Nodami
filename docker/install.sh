@@ -3,18 +3,14 @@
 # 常量定义
 REPO_URL="https://github.com/YoyoCrafts/Nodami.git"
 REPO_DIR="/root/nodami"
-REPO_VERSION="v1.0.3"
+VERSION_CACHE_FILE="/root/.nodami_version"
 
 # 输出带颜色的文本
 echo_content() {
     local ECHO_TYPE="echo -e"
-
-    # 检查是否支持 -e 参数
     if ! $ECHO_TYPE "\033[31mtest\033[0m" &>/dev/null; then
-        ECHO_TYPE="echo"  # 如果不支持 -e，则降级为普通的 echo
+        ECHO_TYPE="echo"
     fi
-
-    # 根据不同的颜色输出文本
     case $1 in
         "red")      $ECHO_TYPE "\033[31m$2\033[0m" ;;
         "green")    $ECHO_TYPE "\033[32m$2\033[0m" ;;
@@ -27,118 +23,83 @@ echo_content() {
     esac
 }
 
-# 安装 Docker
+get_latest_version() {
+    curl -s "https://api.github.com/repos/YoyoCrafts/Nodami/tags" \
+      | grep 'name' | head -n1 | cut -d '"' -f4
+}
+
+get_installed_version() {
+    [[ -f "$VERSION_CACHE_FILE" ]] && cat "$VERSION_CACHE_FILE" || echo "none"
+}
+
 install_docker() {
     echo_content skyBlue "---> 正在安装 Docker..."
-
     if ! docker -v &>/dev/null; then
         echo_content red "Docker 未安装，正在安装..."
-
-        # 尝试不同的安装方法
         install_docker_method
     else
-        # Docker 已安装，检查并启动服务
         check_and_start_docker
     fi
-
-    # 安装 Docker Compose
     install_docker_compose
 }
 
-# 安装 Docker 的不同方法
 install_docker_method() {
-    # 尝试多个安装方式
     if ! install_with_huawei_mirror && ! install_with_get_docker && ! install_with_aliyun_mirror; then
-        # 如果所有方法都失败，则退出脚本
         echo_content red "Docker 安装失败，脚本终止！请尝试手动安装docker"
         exit 1
     fi
 }
 
-# 使用华为镜像源安装 Docker
 install_with_huawei_mirror() {
     echo_content skyBlue "---> 使用华为镜像源安装 Docker..."
     curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh
     sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
-    if docker -v &>/dev/null; then
-        echo_content green "使用华为镜像源安装 Docker 成功。"
-        return 0
-    else
-        return 1
-    fi
+    docker -v &>/dev/null
 }
 
-# 使用 get.docker.com 安装 Docker
 install_with_get_docker() {
     echo_content skyBlue "---> 使用 get.docker.com 安装 Docker..."
     curl -fsSL https://get.docker.com -o /tmp/get_docker.sh
     sudo bash /tmp/get_docker.sh
-    if docker -v &>/dev/null; then
-        echo_content green "使用 get.docker.com 安装 Docker 成功。"
-        return 0
-    else
-        return 1
-    fi
+    docker -v &>/dev/null
 }
 
-# 使用阿里云镜像源安装 Docker
 install_with_aliyun_mirror() {
     echo_content skyBlue "---> 使用阿里云镜像源安装 Docker..."
     curl -fsSL https://get.docker.com -o /tmp/get_docker_aliyun.sh
     sudo bash /tmp/get_docker_aliyun.sh --mirror Aliyun
-    if docker -v &>/dev/null; then
-        echo_content green "使用阿里云镜像源安装 Docker 成功。"
-        return 0
-    else
-        return 1
-    fi
+    docker -v &>/dev/null
 }
 
-# 检查并启动 Docker 服务
 check_and_start_docker() {
-    if systemctl is-active --quiet docker; then
-        echo_content green "Docker 已经在运行。"
-    else
+    if ! systemctl is-active --quiet docker; then
         echo_content yellow "Docker 未启动，正在启动..."
         sudo systemctl enable docker && sudo systemctl restart docker
     fi
     echo_content green "Docker 安装完成并已启动。"
 }
 
-# 安装 Docker Compose
 install_docker_compose() {
     if ! docker compose version &>/dev/null; then
         echo_content skyBlue "---> 正在安装 Docker Compose..."
-
         sudo apt-get update
-
-        # 尝试安装 Docker Compose 插件
-        if sudo apt-get install -y docker-compose-plugin; then
-            echo_content green "Docker Compose 插件安装成功。"
-        else
-            # 安装失败，尝试下载旧版二进制文件
+        if ! sudo apt-get install -y docker-compose-plugin; then
             install_old_docker_compose
+        else
+            echo_content green "Docker Compose 插件安装成功。"
         fi
     else
         echo_content green "Docker Compose 已安装。"
     fi
 }
 
-# 安装旧版 Docker Compose
 install_old_docker_compose() {
     echo_content skyBlue "---> 正在安装旧版 Docker Compose..."
     sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
-
-    if docker-compose --version &>/dev/null; then
-        echo_content green "旧版 Docker Compose 安装成功。"
-    else
-        echo_content red "Docker Compose 安装失败，请检查网络或手动安装。"
-        exit 1
-    fi
+    docker-compose --version &>/dev/null
 }
 
-# 检查 Git 是否已安装
 check_git_installed() {
     if ! command -v git &>/dev/null; then
         echo_content red "Git 未安装，正在安装 Git..."
@@ -148,7 +109,6 @@ check_git_installed() {
     fi
 }
 
-# 安装 Git
 install_git() {
     if [ -x "$(command -v apt)" ]; then
         sudo apt update && sudo apt install -y git
@@ -160,45 +120,31 @@ install_git() {
     fi
 }
 
-# 克隆或更新项目
-clone_or_update_repo() {
-    if [ ! -d "$REPO_DIR/.git" ]; then
-        echo_content blue "项目不存在，正在从 GitHub 克隆..."
-        git clone --depth 1 --branch "$REPO_VERSION" "$REPO_URL" "$REPO_DIR"
-    else
-        echo_content blue "项目已存在，正在拉取最新版本..."
-        cd "$REPO_DIR" || exit
-        git fetch --depth 1 origin tag "$REPO_VERSION"
-        git checkout tags/"$REPO_VERSION" -B "$REPO_VERSION"
-    fi
+nodami_status() {
+  for i in {1..120}; do
+      if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/client/subscription | grep -q "200"; then
+          echo_content green "\nNodami 启动成功！"
+          SERVER_IP=$(curl -s ifconfig.me)
+          echo_content green "后台地址：http://$SERVER_IP:18080"
+          echo_content green "默认账号：admin"
+          echo_content green "默认密码：123456"
+          echo_content yellow "请登录后立即修改默认密码。 如已经修改请使用您设置的密码登录"
+          return
+      else
+          echo -ne "\r正在等待 Nodami 启动... ($i 秒)"
+          sleep 1
+      fi
+  done
+  echo_content red "Nodami 启动超时，请联系开发人员。"
 }
 
-# 安装 Nodami 并启动
 install_nodami() {
     cd "$REPO_DIR/docker/bao" || exit
     docker compose up -d
-
     echo_content skyBlue "正在启动 Nodami，请稍候..."
-
-    for i in {1..120}; do
-        if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/client/subscription | grep -q "200"; then
-            echo_content green "\nNodami 启动成功！"
-            SERVER_IP=$(curl -s ifconfig.me)
-            echo_content green "后台地址：http://$SERVER_IP:18080"
-            echo_content green "默认账号：admin"
-            echo_content green "默认密码：123456"
-            echo_content yellow "请登录后立即修改默认密码。"
-            return
-        else
-            echo -ne "\r正在等待 Nodami 启动... ($i 秒)"
-            sleep 1
-        fi
-    done
-
-    echo_content red "Nodami 启动超时，请联系开发人员。"
+    nodami_status
 }
 
-# 卸载 Nodami
 uninstall_nodami() {
     echo_content red "正在卸载 Nodami..."
     cd "$REPO_DIR/docker/bao" || exit
@@ -208,7 +154,6 @@ uninstall_nodami() {
     echo_content green "Nodami 已彻底卸载。"
 }
 
-# 重新安装 Nodami
 reinstall_nodami() {
     uninstall_nodami
     echo_content yellow "正在重新安装 Nodami..."
@@ -216,9 +161,72 @@ reinstall_nodami() {
     install_nodami
 }
 
-# 主程序
+check_for_update() {
+    local installed_version latest_version
+    installed_version=$(get_installed_version)
+    latest_version=$(get_latest_version)
+    echo_content white "当前版本: $installed_version"
+    echo_content white "最新版本: $latest_version"
+
+    if [[ "$installed_version" == "none" ]]; then
+       echo "$latest_version" > "v1.0.0"
+    fi
+
+    if [[ "$installed_version" != "$latest_version" ]]; then
+        echo_content yellow "发现新版本，是否更新？(y/n)"
+        read -r update_choice
+        if [[ "$update_choice" == "y" ]]; then
+            update_nodami "$latest_version"
+        else
+            echo_content white "已取消更新操作。"
+        fi
+    else
+        update_nodami_this
+    fi
+}
+
+
+update_nodami_this() {
+   echo_content yellow "正在更新 Nodami 到当前版本最新代码"
+   cd "$REPO_DIR" || exit
+   git pull
+   cd "$REPO_DIR/docker/bao" || exit
+   echo_content skyBlue "更新完成 Nodami 重新启动..."
+   docker compose down
+   docker compose up -d
+   echo_content skyBlue "等待 Nodami 启动..."
+   nodami_status
+}
+
+
+update_nodami() {
+    echo_content yellow "正在更新 Nodami 到版本 $1..."
+    cd "$REPO_DIR" || exit
+    git fetch --tags
+    git checkout "tags/$1" -B "$1"
+    cd "$REPO_DIR/docker/bao" || exit
+    echo_content skyBlue "更新完成 Nodami 重新启动..."
+    docker compose down
+    docker compose up -d
+    echo_content skyBlue "等待 Nodami 启动..."
+    nodami_status
+}
+
+clone_or_update_repo() {
+    latest_version=$(get_latest_version)
+    if [ ! -d "$REPO_DIR/.git" ]; then
+        echo_content blue "项目不存在，正在从 GitHub 克隆..."
+        git clone --depth 1 --branch "$latest_version" "$REPO_URL" "$REPO_DIR"
+    else
+        echo_content blue "项目已存在，正在拉取最新版本..."
+        cd "$REPO_DIR" || exit
+        git fetch --depth 1 origin tag "$latest_version"
+        git checkout tags/"$latest_version" -B "$latest_version"
+    fi
+    echo "$latest_version" > "$VERSION_CACHE_FILE"
+}
+
 main() {
-    # 每次执行时都先检查依赖
     check_git_installed
     install_docker
 
@@ -227,11 +235,13 @@ main() {
         echo "1) 重启 Nodami"
         echo "2) 重新安装 Nodami"
         echo "3) 卸载 Nodami"
-        read -rp "请选择 [1-重启, 2-重新安装, 3-卸载]: " choice
+        echo "4) 检查更新"
+        read -rp "请选择 [1-重启, 2-重新安装, 3-卸载, 4-检查更新]: " choice
         case $choice in
-            1) cd "$REPO_DIR/docker/bao" || exit && docker compose restart && echo_content green "Nodami 已重启。" ;;
+            1) cd "$REPO_DIR/docker/bao" || exit && docker compose restart && nodami_status && echo_content green "Nodami 已重启。" ;;
             2) reinstall_nodami ;;
             3) uninstall_nodami ;;
+            4) check_for_update ;;
             *) echo_content red "输入无效，脚本终止。" && exit 1 ;;
         esac
     else
@@ -240,5 +250,4 @@ main() {
     fi
 }
 
-# 执行主程序
 main
