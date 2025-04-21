@@ -215,13 +215,8 @@ update_nodami() {
 clone_or_update_repo() {
     latest_version=$(get_latest_version)
     if [ ! -d "$REPO_DIR/.git" ]; then
-        echo_content blue "项目不存在，正在从 GitHub 克隆..."
+        echo_content blue "Nodami尚未安装，开始从 GitHub 克隆..."
         git clone --depth 1 --branch "$latest_version" "$REPO_URL" "$REPO_DIR"
-    else
-        echo_content blue "项目已存在，正在拉取最新版本..."
-        cd "$REPO_DIR" || exit
-        git fetch --depth 1 origin tag "$latest_version"
-        git checkout tags/"$latest_version" -B "$latest_version"
     fi
     echo "$latest_version" > "$VERSION_CACHE_FILE"
 }
