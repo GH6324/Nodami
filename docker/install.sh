@@ -3,7 +3,7 @@
 # 常量定义
 REPO_URL="https://github.com/YoyoCrafts/Nodami.git"
 REPO_DIR="/root/nodami"
-REPO_VERSION="v1.0.2"
+REPO_VERSION="v1.0.3"
 
 # 输出带颜色的文本
 echo_content() {
