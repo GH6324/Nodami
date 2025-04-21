@@ -32,20 +32,48 @@ module.exports = {
     port: port,
     proxy: {
       '/api': {
-        target: "http://127.0.0.1:8200",
+        target: 'http://127.0.0.1:8200',
         changeOrigin: true,
         ws: true,
-        pathRewrite: {
-         "/api": '/'
+        pathRewrite: { '^/api': '/' },
+        onError(err, req, res) {
+          console.error('代理 /api 出错:', err.message)
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' })
+            res.end('代理错误，请检查后端是否启动')
+          }
         }
       },
       '/terminal': {
-        target: "http://127.0.0.1:8200",
+        target: 'http://127.0.0.1:8200',
         changeOrigin: true,
         ws: true,
-      },
+        onError(err, req, res) {
+          console.error('代理 /terminal 出错:', err.message)
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' })
+            res.end('WebSocket 代理错误，请检查后端服务')
+          }
+        }
+      }
     },
-    disableHostCheck: true,
+
+    // ✅ 在 vue-cli-service 3.x 中用 before + 全局监听方式解决 ECONNRESET 崩溃
+    before(app) {
+      // 捕获全局 socket 错误（ECONNRESET）
+      process.on('uncaughtException', (err) => {
+        if (err.code === 'ECONNRESET') {
+          console.warn('⚠️ 捕获到 ECONNRESET 异常，跳过避免崩溃：', err.message)
+        } else {
+          console.error('未处理异常:', err)
+          process.exit(1)
+        }
+      })
+
+      process.on('unhandledRejection', (reason) => {
+        console.warn('⚠️ 捕获到未处理的 Promise 异常:', reason)
+      })
+    }
   },
   configureWebpack: {
     name: name,

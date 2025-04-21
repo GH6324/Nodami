@@ -43,6 +43,7 @@
 
 import SlideDialog from "./SlideDialog.vue";
 import request from "./common";
+import {getToken} from "@/utils/auth";
 
 export default {
   name: 'FileList',
@@ -95,7 +96,7 @@ export default {
       }
     },
     uploadUrl: () => {
-      return `/terminal/file/upload`
+      return `/terminal/file/upload?&token=${encodeURIComponent(getToken())}`
     },
     uploadData: function () {
       return {
@@ -177,7 +178,7 @@ export default {
       e.percent = e.percent / 2
       f.percentage = f.percentage / 2
       if (e.percent === 50) {
-        const ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}/terminal/file/progress?id=${f.uid}`)
+        const ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}/terminal/file/progress?id=${f.uid}&token=${encodeURIComponent(getToken())}`)
         ws.onmessage = e1 => {
           f.percentage = (f.size + Number(e1.data)) / (f.size * 2) * 100
         }
@@ -208,7 +209,7 @@ export default {
       if (this.currentPath === '') {
         this.currentPath = '/'
       }
-      const result = await request.get(`/terminal/file/list?path=${this.currentPath}&serverId=${this.serverId}`)
+      const result = await request.get(`/terminal/file/list?path=${this.currentPath}&serverId=${this.serverId}&token=${encodeURIComponent(getToken())}`)
       if (result.msg === 'success') {
         if (result.data.list === null) {
           this.fileList = []
@@ -236,7 +237,7 @@ export default {
       this.getFileList()
     },
     downloadFile() {
-      const downloadUrl = `/terminal/file/download?path=${this.downloadFilePath}&serverId=${this.serverId}`
+      const downloadUrl = `/terminal/file/download?path=${this.downloadFilePath}&serverId=${this.serverId}&token=${encodeURIComponent(getToken())}`
       window.open(downloadUrl)
     },
   }

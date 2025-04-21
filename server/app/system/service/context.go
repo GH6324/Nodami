@@ -28,7 +28,7 @@ func (s *contextService) Get(ctx context.Context) *dao.Context {
 	return nil
 }
 
-// SetUser 将上下文信息设置到上下文请求中，注意是完整覆盖
+// xSetUser 将上下文信息设置到上下文请求中，注意是完整覆盖
 func (s *contextService) SetUser(ctx context.Context, ctxUser *dao.CtxUser) {
 	s.Get(ctx).User = ctxUser
 }

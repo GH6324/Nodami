@@ -185,6 +185,7 @@ import {sizeFormat} from '@/utils'
 import ResourceProgress from '@/components/ResourceProgress'
 import terminal from "@/components/Terminal/index.vue";
 import {reStartServer, reStartVpnServer} from "@/api/vpn/vpnServer";
+import {getToken} from "@/utils/auth";
 
 
 export default {
@@ -260,7 +261,8 @@ export default {
         this.ws = null
       }
       try {
-        this.ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}/terminal/info?serverId=${this.serverId}`)
+        let wsUrl = `${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}/terminal/info?serverId=${this.serverId}&token=${encodeURIComponent(getToken())}`
+        this.ws = new WebSocket(wsUrl)
         this.ws.onmessage = ({ data }) => {
           this.isDisconnected = false;
           // ① 判空

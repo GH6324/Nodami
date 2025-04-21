@@ -19,10 +19,10 @@
         </button>
 
         <!-- 文件管理按钮 -->
-        <button v-if="!isDisconnected" class="control-btn" title="文件管理" @click="setFileListVisible()">
-          <i class="fas fa-folder"></i>
-          <span class="btn-text">文件管理</span>
-        </button>
+<!--        <button v-if="!isDisconnected" class="control-btn" title="文件管理" @click="setFileListVisible()">-->
+<!--          <i class="fas fa-folder"></i>-->
+<!--          <span class="btn-text">文件管理</span>-->
+<!--        </button>-->
       </div>
     </div>
 
@@ -127,6 +127,7 @@ import {FitAddon} from 'xterm-addon-fit'
 import {AttachAddon} from 'xterm-addon-attach'
 import FileList from './FileList'
 import CommandPanel from './CommandPanel.vue'
+import {getToken} from "@/utils/auth";
 
 export default {
   components: {
@@ -196,7 +197,7 @@ export default {
             this.safeFit(0)
           }, 500)
         })
-      }else {
+      } else {
         this.safeFit(500)
       }
     },
@@ -252,7 +253,13 @@ export default {
         }
       }
       let closeTip = '已超时关闭!'
-      this.ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}/terminal/term?serverId=${this.serverId}&rows=${this.term.rows}&cols=${this.term.cols}&closeTip=${closeTip}`)
+      try {
+        this.ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}/terminal/term?serverId=${this.serverId}&rows=${this.term.rows}&cols=${this.term.cols}&closeTip=${closeTip}&token=${encodeURIComponent(getToken())}`)
+      } catch (e) {
+        console.error('WebSocket 初始化失败：', e)
+        this.term.write('无法建立 WebSocket 连接，请检查服务状态。')
+        return;
+      }
       this.ws.onopen = () => {
         console.log(Date(), 'onopen')
         heartCheck.start()
