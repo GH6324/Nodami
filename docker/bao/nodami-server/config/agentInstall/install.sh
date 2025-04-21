@@ -101,7 +101,11 @@ quick_update() {
 
 ### ========= 下载 & 解压 ========= ###
 download_agent_zip() {
-  command -v unzip &>/dev/null || { cecho skyBlue "安装 unzip"; $(pkg_mgr) install -y unzip; }
+  command -v unzip &>/dev/null || {
+    cecho skyBlue "安装 unzip"
+    local mgr; mgr=$(pkg_mgr)
+    $mgr install -y unzip
+  }
 
   # -- ① 如果已存在同名 zip 且解压目录有效，直接返回 --------------------------
   if [[ -f $ZIP_PATH && -x $AGENT_DIR/agent ]]; then
