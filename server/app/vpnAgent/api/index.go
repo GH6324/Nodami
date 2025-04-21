@@ -76,8 +76,8 @@ func (c vpnAgentApi) InstallAgentSh(r *ghttp.Request) {
 	sh = strings.ReplaceAll(sh, "{{dnsServers}}", serverDns)
 	sh = strings.Replace(sh, "{{settings.mqttUser}}", g.Cfg().GetString("mqtt.user"), 1)
 	sh = strings.Replace(sh, "{{settings.mqttPass}}", g.Cfg().GetString("mqtt.pass"), 1)
-	sh = strings.ReplaceAll(sh, "{{server.docker}}", fmt.Sprintf("curl -sSL %s/agent/install/docker/main.sh", library.GetAgentAPI()))
-	sh = strings.ReplaceAll(sh, "{{server.mirrors}}", fmt.Sprintf("curl -sSL %s/agent/install/mirrors/main.sh", library.GetAgentAPI()))
+	sh = strings.ReplaceAll(sh, "{{server.docker}}", fmt.Sprintf("%s/agent/install/docker/main.sh", library.GetAgentAPI()))
+	sh = strings.ReplaceAll(sh, "{{server.mirrors}}", fmt.Sprintf("%s/agent/install/mirrors/main.sh", library.GetAgentAPI()))
 	sh = strings.ReplaceAll(sh, "{{agent_api}}", library.GetAgentAPI())
 
 	shortIds, _ := json.Marshal(library.Settings.Peality.ShortIds)

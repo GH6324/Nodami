@@ -7,7 +7,10 @@
 
 package model
 
-import "github.com/gogf/gf/os/gtime"
+import (
+	"gfast/app/vpn/dao"
+	"github.com/gogf/gf/os/gtime"
+)
 
 // VpnNode is the golang structure for table vpn_node.
 type VpnNode struct {
@@ -50,6 +53,7 @@ type VpnNodeInfo struct {
 	Transfers   []VpnNodeTransfer `json:"transfers"`
 	NationName  string            `json:"nationName"`
 	FrpServerIp string            `json:"frpServerIp"`
+	Proxie      *dao.Proxie       `json:"proxie"`
 }
 
 type PingInfo struct {

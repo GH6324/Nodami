@@ -68,16 +68,7 @@ export default {
     this.getWeb();
   },
   methods: {
-    languageChange(v) {
-      for (let i in this.ruleForm.client.language) {
-        this.ruleForm.client.language[i]['mark'] = this.languageMap[this.ruleForm.client.language[i].language]
-      }
-    },
-    currencyChange(v) {
-      for (let i in this.ruleForm.client.currency) {
-        this.ruleForm.client.currency[i]['symbol'] = this.symbolMap[this.ruleForm.client.currency[i].currency]
-      }
-    },
+
     randomUUID() {
       let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);

@@ -230,7 +230,7 @@ func (c *vpnServer) PppoeReStart(r *ghttp.Request) {
 	c.SusJsonExit(r, "提交成功")
 }
 
-func (c *vpnServer) ReStartXray(r *ghttp.Request) {
+func (c *vpnServer) ReStartVpnServer(r *ghttp.Request) {
 	ids := r.GetInts("ids")
 	for _, v := range ids {
 		service.Restart(v)
@@ -239,9 +239,8 @@ func (c *vpnServer) ReStartXray(r *ghttp.Request) {
 }
 
 func (c *vpnServer) Log(r *ghttp.Request) {
-	logName := r.GetString("logName")
 	id := r.GetInt("serverId")
-	c.SusJsonExit(r, service.GetLog(id, logName))
+	c.SusJsonExit(r, service.GetLog(id))
 }
 
 func (c *vpnServer) Info(r *ghttp.Request) {
@@ -258,41 +257,17 @@ type PingRes struct {
 	Value      float64 `json:"value"`
 }
 
-func (c *vpnServer) PingIp(r *ghttp.Request) {
-	vpnNodeId := r.GetInt("vpnNodeId")
-
-	info, err := service.VpnServer.PingIp(r.GetCtx(), vpnNodeId)
+func (c *vpnServer) PingServer(r *ghttp.Request) {
+	serverId := r.GetInt("inServerId")
+	toServerId := r.GetInt("toServerId")
+	res := &PingRes{
+		InServerId: serverId,
+		ToServerId: toServerId,
+	}
+	var err error
+	res.Value, err = service.PingIp(serverId, toServerId)
 	if err != nil {
-		c.FailJsonExit(r, err.Error())
+		res.Value = -1
 	}
-
-	res := make([]PingRes, 0)
-
-	if info.FrpServerId > 0 {
-		pingRes := PingRes{
-			InServerId: info.ServerId,
-			ToServerId: info.FrpServerId,
-		}
-		pingRes.Value, err = service.PingIp(info.ServerId, info.FrpServerIp)
-		if err != nil {
-			pingRes.Value = -1
-		}
-		res = append(res, pingRes)
-	}
-
-	if len(info.Transfers) > 0 {
-		for _, v := range info.Transfers {
-			pingRes := PingRes{
-				InServerId: v.EntranceServerId,
-				ToServerId: v.ExitServerId,
-			}
-			pingRes.Value, err = service.PingIp(v.EntranceServerId, v.ExitServerIp)
-			if err != nil {
-				pingRes.Value = -1
-			}
-			res = append(res, pingRes)
-		}
-	}
-
 	c.SusJsonExit(r, res)
 }

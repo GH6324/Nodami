@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"io"
+	"os"
 	"os/exec"
 	"reflect"
 	"regexp"
@@ -111,7 +113,6 @@ type ServerInfo struct {
 	Loads      []float64      `json:"loads"`      // 负载信息，表示1分钟、5分钟和15分钟的平均负载
 	TcpCount   int32          `json:"tcpCount"`   // TCP连接数
 	UdpCount   int32          `json:"udpCount"`   // UDP连接数
-	MainIp     string         `json:"mainIp"`     // 主IP地址
 	NetIO      NetIOInfo      `json:"netIO"`      // 网络IO信息
 	NetTraffic NetTrafficInfo `json:"netTraffic"` // 网络流量信息
 }
@@ -770,4 +771,46 @@ func (x *VPNUser) CompareUsers(newUsers []User) (added []User, removed []User) {
 func GenerateUUIDFromString(input string) string {
 	// 使用DNS命名空间，也可以自定义其他的
 	return uuid.NewSHA1(uuid.NameSpaceDNS, []byte(input)).String()
+}
+
+// CheckAndRotateLogFile 检查日志文件大小，并在超过限制时截断文件
+func CheckAndRotateLogFile(file string, maxLogFileSize int64) error {
+	fileInfo, err := os.Stat(file)
+	if err != nil {
+		return fmt.Errorf("无法获取文件信息: %v", err)
+	}
+
+	// 如果文件大小超过限制，截断文件
+	if fileInfo.Size() > maxLogFileSize {
+		err = TruncateLogFile(file, maxLogFileSize)
+		if err != nil {
+			return fmt.Errorf("截断日志文件失败: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// TruncateLogFile 截断日志文件到最大大小的限制
+func TruncateLogFile(file string, maxLogFileSize int64) error {
+	// 打开文件
+	f, err := os.OpenFile(file, os.O_RDWR, 0644)
+	if err != nil {
+		return fmt.Errorf("打开文件失败: %v", err)
+	}
+	defer f.Close()
+
+	// 移动到文件的末尾
+	_, err = f.Seek(0, io.SeekEnd)
+	if err != nil {
+		return fmt.Errorf("移动文件指针失败: %v", err)
+	}
+
+	// 截断文件内容，只保留最新的日志
+	err = f.Truncate(maxLogFileSize)
+	if err != nil {
+		return fmt.Errorf("截断文件失败: %v", err)
+	}
+
+	return nil
 }

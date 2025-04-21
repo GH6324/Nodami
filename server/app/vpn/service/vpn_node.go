@@ -17,6 +17,7 @@ import (
 	"gfast/app/vpn/dao"
 	"gfast/app/vpn/model"
 	vpnClient "gfast/app/vpnClient/service"
+	"gfast/library"
 	"github.com/gogf/gf/database/gdb"
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/frame/g"
@@ -135,7 +136,6 @@ func (s *vpnNode) GetInfoById(ctx context.Context, nodeId int) (info *model.VpnN
 	fields = append(fields, dao.VpnNode.Fields(true, true)...)
 	fields = append(fields, dao.VpnServer.Fields(true, false, dao.VpnNode.Fields(false, false)...)...)
 	fields = append(fields, dao.VpnNodeNation.Fields(true, false, dao.VpnNode.Fields(false, false)...)...)
-	//fields = append(fields, dao.VpnDomain.Fields(true, false, dao.VpnNode.Fields(false, false)...)...)
 
 	err = dao.VpnNode.Ctx(ctx).
 		LeftJoin(dao.VpnNodeNation.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnNodeNation.Table, dao.VpnNodeNation.Columns.NationId, dao.VpnNode.Table, dao.VpnNode.Columns.NationId)).
@@ -152,7 +152,12 @@ func (s *vpnNode) GetInfoById(ctx context.Context, nodeId int) (info *model.VpnN
 	}
 
 	info.Transfers = make([]model.VpnNodeTransfer, 0)
-	dao.VpnNodeTransfer.Ctx(ctx).Where(dao.VpnNodeTransfer.Columns.NodeId, info.NodeId).Order(dao.VpnNodeTransfer.Columns.TransferId + " ASC").Scan(&info.Transfers)
+	err = dao.VpnNodeTransfer.Ctx(ctx).Where(dao.VpnNodeTransfer.Columns.NodeId, info.NodeId).Order(dao.VpnNodeTransfer.Columns.TransferId + " ASC").Scan(&info.Transfers)
+	if err != nil {
+		return
+	}
+
+	info.Proxie, err = vpnClient.VpnNodeService.GetClashProxie(info, 0, library.Settings.Agent.CommonUUID)
 	return
 }
 
@@ -464,6 +469,11 @@ func (s *vpnNode) DeleteByIds(ctx context.Context, ids []int) (err error) {
 
 func (s *vpnNode) SpeedPing(ctx context.Context, nodeId, pingId int, speed bool) (sm int, err error) {
 
+	defer func() {
+		if err != nil {
+			sm = -1
+		}
+	}()
 	proxies, err := vpnClient.VpnNodeService.GetClashProxies(ctx, nodeId, 0)
 	if err != nil {
 		return
@@ -494,9 +504,6 @@ func (s *vpnNode) SpeedPing(ctx context.Context, nodeId, pingId int, speed bool)
 		testUrl = modelNodePing.SpeedUrl
 	}
 	sm, err = commonInfo.SpeedPing(ctx, modelNodePing.ServerIp, testUrl, 1703, string(proxiesString), speed)
-	if err != nil {
-		sm = -1
-	}
 
 	return
 }

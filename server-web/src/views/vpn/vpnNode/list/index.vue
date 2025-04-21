@@ -96,10 +96,18 @@
     </el-row>
     <el-table border v-loading="loading" :data="vpnNodeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" align="center"/>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" min-width="160">
         <template slot-scope="scope">
           <el-col>
             <el-row>
+              <el-button
+                size="mini"
+                type="info" plain
+                style="padding: 6px 6px 6px 6px"
+                @click="openQrCode(scope.row)"
+                v-hasPermi="['vpn/vpnServer/edit']"
+              >二维码
+              </el-button>
               <el-button
                 size="mini"
                 type="info" plain
@@ -138,31 +146,44 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" prop="up">
+      <el-table-column label="流量/延迟" align="center" prop="up" min-width="260">
         <template slot-scope="scope">
           <el-col style="font-size: 12px;">
-            <el-row type="flex" style="justify-content: flex-start;">
-              <el-tag size="mini" style="width: 200px;">
-                流量: ↑{{ `${sizeFormat(scope.row.up)} ↓${sizeFormat(scope.row.down)}` }}
-              </el-tag>
+            <!-- 优化流量显示 -->
+            <el-row class="traffic-row">
+              <div class="traffic-item">
+                <span class="traffic-label">↑</span>
+                <span class="traffic-value">{{ sizeFormat(scope.row.up) }}</span>
+              </div>
+              <div class="traffic-item">
+                <span class="traffic-label">↓</span>
+                <span class="traffic-value">{{ sizeFormat(scope.row.down) }}</span>
+              </div>
             </el-row>
-            <el-row type="flex"
-                    style="margin-top: 10px; flex-wrap: wrap;align-items: center; justify-content: flex-start;font-size: 10px;">
-              <span style="margin-right: 3px" v-for="(value, index) in scope.row.ping" :key="index">
-                {{ value.nationName }}:
-                <el-tag @click="pingTest(scope.row.nodeId,value)" v-if="value.ping != -2"
-                        style="width: 55px;font-size: 10px;" size="mini"
-                        :type="(value.ping >= 0 && value.ping <1000)?'success':((value.ping > 0 && value.ping >=1000)?'warning':'danger')">{{
-                    value.ping > -1 ? (value.ping + " ms") : "----"
-                  }}</el-tag>
-                <el-tag v-if="value.ping == -2" style="width: 55px;font-size: 10px;" size="mini"><i
-                  class="el-icon-loading"></i></el-tag>
-              </span>
+
+            <!-- 优化ping值显示 -->
+            <el-row class="ping-container">
+              <div
+                v-for="(value, index) in scope.row.pings"
+                :key="index"
+                class="ping-item"
+              >
+                <span class="nation-name">{{ value.nationName }}:</span>
+                <el-tag
+                  @click="pingTest(scope.row.nodeId,value)"
+                  class="ping-tag"
+                  size="mini"
+                  :type="value.ping ===0?'':(value.ping > 0 && value.ping <300)?'success':((value.ping >=300)?'warning':'danger')"
+                >
+                  <i v-if="value['pinging']" class="el-icon-loading"></i>
+                  <i v-else>{{ value.ping > -1 ? (value.ping + " ms") : "----" }}</i>
+                </el-tag>
+              </div>
             </el-row>
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="节点信息" align="center" prop="serverName" width="260">
+      <el-table-column label="节点信息" align="center" prop="serverName" min-width="260">
         <template slot-scope="scope">
           <el-col style="font-size: 12px;">
             <el-row type="flex" align="middle">
@@ -177,7 +198,7 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="节点服务器" align="center" prop="serverName" width="200">
+      <el-table-column label="节点服务器" align="center" prop="serverName" min-width="200">
         <template slot-scope="scope">
           <el-col style="font-size: 12px;">
             <el-row type="flex" align="middle">
@@ -193,50 +214,38 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="中转服务器" align="center" prop="serverName" width="380">
+      <el-table-column label="中转" align="center" prop="serverName" min-width="300">
         <template slot-scope="scope">
-          <el-col style="font-size: 12px;" v-if="scope.row.transfers.length > 0 && scope.row.transitProtocol">
-            <el-row type="flex" align="middle">
-              <el-row :span="24" style="text-align: left;">中转协议:
-                <el-tag size="mini">{{ allTransitProtocolFormat(scope.row) }}</el-tag>
-              </el-row>
-            </el-row>
-            <el-row :gutter="24" style="font-size: 12px; margin-top: 5px" v-for="dict in scope.row.transfers">
-              <el-col :span="12">
-                <el-row type="flex" align="middle">入口服ID: {{ dict.entranceServerId }}</el-row>
-              </el-col>
-              <el-col :span="12">
-                <el-row type="flex" align="middle">出口服ID: {{ dict.exitServerId }}</el-row>
-              </el-col>
+          <template>
+            <template v-if="(transferList = sortedTransfers(scope.row)) && transferList.length >= 2">
+              <el-col style="font-size: 12px;">
+                <el-row type="flex" align="middle">
+                  <el-row :span="24" style="text-align: left;">
+                    中转协议:
+                    <el-tag size="mini">{{ allTransitProtocolFormat(scope.row) }}</el-tag>
+                  </el-row>
+                </el-row>
 
-
-            </el-row>
-          </el-col>
-          <el-tag v-if="!scope.row.transfers || scope.row.transfers.length == 0 || !scope.row.transitProtocol">直连
-          </el-tag>
+                <div class="latency-grid">
+                  <template v-for="(v, index) in transferList">
+                    <div class="latency-connection">
+                      <span class="node-id">服ID:{{ v.serverId }}</span>
+                      <div class="arrow-section" v-if="(index+1) !== transferList.length">
+                        <div class="arrow-head">▶</div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </el-col>
+            </template>
+            <template v-else>
+              <el-tag>直连</el-tag>
+            </template>
+          </template>
         </template>
       </el-table-column>
-      <el-table-column label="内网穿透服务器" align="center" prop="serverName" width="200">
-        <template slot-scope="scope">
-          <el-col style="font-size: 12px;" v-if="scope.row.frpProtocol">
-            <el-row type="flex" align="middle" style="margin-bottom: 10px">
-              穿透协议:
-              <el-tag size="mini">{{ scope.row.frpProtocol }}</el-tag>
-            </el-row>
-            <el-row type="flex" align="middle">
-              服务器ID: {{ scope.row.frpServerId }}
-            </el-row>
-            <el-row type="flex" align="middle"
-                    style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
-              服务器名称: {{ serverIdFormat(scope.row.frpServerId) }}
-            </el-row>
-            <el-row type="flex" align="middle">
-              地区: {{ langShow(serverIdNodeNationFormat(scope.row.frpServerId)) }}
-            </el-row>
-          </el-col>
-          {{ scope.row.frpServerId == 0 || !scope.row.frpProtocol ? "--" : "" }}
-        </template>
-      </el-table-column>
+
+
     </el-table>
     <pagination
       v-show="total>0"
@@ -431,7 +440,8 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="伪装协议" prop="transportProtocol" v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan'">
+            <el-form-item label="伪装协议" prop="transportProtocol"
+                          v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan'">
               <el-select v-model="form.transportProtocol" placeholder="请选择伪装协议" size="small"
                          style="width: 150px">
                 <el-option
@@ -442,8 +452,10 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="host" prop="streamSettingsHost" v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan' || form.protocol == 'shadowtls' || form.protocol == 'tuic'">
-              <el-input v-model="form.streamSettingsHost" placeholder="不能为空不然可能无法连接" size="small" style="width: 150px"/>
+            <el-form-item label="host" prop="streamSettingsHost"
+                          v-if="form.protocol == 'vmess' || form.protocol == 'vless' || form.protocol == 'trojan' || form.protocol == 'shadowtls' || form.protocol == 'tuic'">
+              <el-input v-model="form.streamSettingsHost" placeholder="不能为空不然可能无法连接" size="small"
+                        style="width: 150px"/>
             </el-form-item>
             <el-form-item label="path" prop="streamSettingsPath" v-if="form.transportProtocol == 'websocket'">
               <el-input v-model="form.streamSettingsPath" placeholder="如果您不清楚请保持默认" size="small"
@@ -453,7 +465,8 @@
               <el-input v-model="form.streamSettingsServiceName" placeholder="如果您不清楚请保持默认" size="small"
                         style="width: 150px"/>
             </el-form-item>
-            <el-form-item label="reality" prop="streamSettingsReality" v-if="form.transportProtocol == 'grpc' && form.protocol != 'vmess'">
+            <el-form-item label="reality" prop="streamSettingsReality"
+                          v-if="form.transportProtocol == 'grpc' && form.protocol != 'vmess'">
               <el-select v-model="form.streamSettingsReality" placeholder="不懂请默认" size="small"
                          style="width: 150px">
                 <el-option
@@ -508,11 +521,104 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="诊断" v-if="open_monitor" :visible.sync="open_monitor" width="90%">
+    <el-dialog title="诊断" v-if="open_monitor" :visible.sync="open_monitor" width="600px">
       <monitor v-if="open_monitor" :nodeInfo="form"/>
     </el-dialog>
+    <!-- 你的父组件中 -->
+    <qr-code-dialog :visible.sync="open_qrCode" :proxie="form.proxie" title="扫码导入节点"/>
+
   </div>
 </template>
+
+<style lang="scss" scoped>
+
+.traffic-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.traffic-item {
+  display: flex;
+  align-items: center;
+
+  .traffic-label {
+    color: #909399;
+    margin-right: 4px;
+  }
+
+  .traffic-value {
+    color: #606266;
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+.ping-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.ping-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .nation-name {
+    color: #909399;
+    font-size: 11px;
+  }
+}
+
+.ping-tag {
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 10px;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+
+/* 节点延迟面板 */
+.latency-grid {
+  display: flex;
+  flex-wrap: wrap; // ✅ 允许换行显示
+  align-items: center;
+  gap: 12px;
+}
+
+.latency-connection {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  color: #606266;
+  font-size: 13px;
+}
+
+.node-id {
+  white-space: nowrap;
+}
+
+.arrow-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 8px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.arrow-head {
+  font-size: 12px;
+}
+
+
+</style>
 <script>
 import {addVpnNode, delVpnNode, getVpnNode, listVpnNode, pingTest, updateVpnNode,} from "@/api/vpn/vpnNode";
 import {listVpnServer} from "@/api/vpn/vpnServer";
@@ -525,9 +631,11 @@ import InputList from "@/components/InputList/index.vue";
 import transfers from "@/views/vpn/vpnNode/list/transfers.vue";
 import {listVpnNodeNation} from "@/api/vpn/vpnNodeNation";
 import {listVpnNodeGroup} from "@/api/vpn/vpnNodeGroup";
+import qrCodeDialog from "@/views/vpn/vpnNode/list/qrCodeDialog.vue";
+import {listVpnNodePing} from "@/api/vpn/vpnNodePing";
 
 export default {
-  components: {InputList, monitor, transfers},
+  components: {InputList, monitor, transfers, qrCodeDialog},
   name: "VpnNode",
   data() {
     return {
@@ -549,9 +657,9 @@ export default {
       // 是否显示弹出层
       open: false,
       open_monitor: false,
+      open_qrCode: false,
       // serverIdOptions关联表数据
       serverIdOptions: [],
-      serverIdNodeNationOptions: [],
       // outputTypeOptions
       outputTypeOptions: [
         {
@@ -604,9 +712,14 @@ export default {
         {
           key: "hysteria2",
           value: "hysteria2"
-        }, {
+        },
+        {
           key: "tuic",
           value: "tuic"
+        },
+        {
+          key: "socks",
+          value: "socks"
         }
       ],
 
@@ -695,6 +808,7 @@ export default {
           value: "vpn_node.nation_id desc,vpn_node.node_id desc"
         },
       ],
+      vpnNodePingOptions: [],
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -822,19 +936,51 @@ export default {
     this.getDicts("vpn_status").then(response => {
       this.statusOptions = response.data.values || [];
     });
+    this.listVpnNodePing()
     this.getVpnServerItems()
     this.getVpnNodeNationItems()
-    this.getVpnServerNodeNationItems()
     this.getVpnNodeGroupItems()
     this.getList();
   },
   methods: {
-    listVpnNodeGroup,
     parseTime,
     langShow,
     listVpnNode,
     listVpnServer,
     sizeFormat,
+    getPing(row) {
+      let pingMap = {}
+      for (let i in row.ping) {
+        let v = row.ping[i]
+        pingMap[v.pingId] = v
+      }
+
+      let list = []
+      for (let i in this.vpnNodePingOptions) {
+        let v = this.vpnNodePingOptions[i]
+        let ping = pingMap[v.pingId];
+        let m = {
+          nationName:v.nationName,
+          ping: -1,
+          pingId: v.pingId,
+          pinging: false,
+        }
+        if (ping) {
+          m.ping = ping.ping
+        }
+        list.push(m)
+      }
+      return list
+    },
+    async listVpnNodePing() {
+      await listVpnNodePing({pageNum: 1, pageSize: 100,}).then(response => {
+        this.vpnNodePingOptions = response.data.list
+        // for (let i in response.data.list) {
+        //   let pingInfo = response.data.list[i]
+        //   this.vpnNodePingOptions[pingInfo.pingId] = pingInfo
+        // }
+      });
+    },
     showLoading() {
       this.fullScreenLoading = this.$loading({
         lock: true,
@@ -878,12 +1024,63 @@ export default {
         this.serverIdOptions = this.setItems(res, 'serverId', 'serverName')
       })
     },
-    getVpnServerNodeNationItems() {
-      this.getItems(listVpnServer, {pageSize: 10000}).then(res => {
-        this.serverIdNodeNationOptions = this.setItems(res, 'serverId', 'nationName')
-      })
-    },
+    sortedTransfers(row) {
+      const {serverId, frpServerId, transfers} = row;
 
+      const labelList = [];
+      const forwardMap = new Map();
+      const reverseMap = new Map();
+
+
+      transfers.forEach(item => {
+        forwardMap.set(item.entranceServerId, item.exitServerId);
+        reverseMap.set(item.exitServerId, item.entranceServerId);
+      });
+
+      // 找到起点
+      let start = null;
+      for (let [entrance] of forwardMap) {
+        if (!reverseMap.has(entrance)) {
+          start = entrance;
+          break;
+        }
+      }
+
+      const visited = new Set();
+      const orderedIds = [];
+
+      let current = start;
+      while (current && !visited.has(current)) {
+        orderedIds.push(current);
+        visited.add(current);
+        current = forwardMap.get(current);
+      }
+
+      // 处理 orderedIds
+      orderedIds.forEach(id => {
+        if (id !== serverId) {
+          labelList.push({
+            serverId: id,
+            serverName: '中转服ID:' + id,
+          });
+        }
+      });
+
+      // FRP 服
+      if (frpServerId) {
+        labelList.push({
+          serverId: frpServerId,
+          serverName: 'FRP服ID:' + frpServerId,
+        });
+      }
+
+      labelList.push({
+        serverId: serverId,
+        serverName: 'VPN服ID:' + serverId,
+      });
+
+      return labelList
+    },
     /** 查询Vpn节点配置列表 */
     getList() {
       this.loading = true;
@@ -891,6 +1088,7 @@ export default {
 
         for (let i in response.data.list) {
           response.data.list[i].ping = JSON.parse(response.data.list[i].ping)
+          response.data.list[i].pings = this.getPing(response.data.list[i])
         }
 
         this.vpnNodeList = response.data.list;
@@ -901,55 +1099,19 @@ export default {
       });
     },
     pingTest(nodeId, pingInfo) {
-      pingInfo.ping = -2
+      pingInfo.ping = 0
+      pingInfo["pinging"] = true
       pingTest(nodeId, pingInfo.pingId).then(response => {
         pingInfo.ping = response.data
+        pingInfo["pinging"] = false
       }).catch((e) => {
-        pingInfo.ping = 0
+        pingInfo.ping = -1
       })
     },
 
 
     serverIdFormat(serverId) {
       return this.selectItemsLabel(this.serverIdOptions, serverId);
-    },
-    serverIdNodeNationFormat(serverId) {
-      return this.selectItemsLabel(this.serverIdNodeNationOptions, serverId);
-    },
-
-    // 自动出口字典翻译
-    outputTypeFormat(row, column) {
-      return this.selectDictLabel(this.outputTypeOptions, row.outputAuto);
-    },
-
-
-    nodeLineIdFormats(row, column) {
-      let group = ""
-      let nodeLineIds = JSON.parse(row.nodeLineIds)
-      nodeLineIds.forEach((value, index) => {
-        group += (group ? "," : "") + this.selectDictLabel(this.nodeLineIdOptions, value);
-      });
-      return group;
-    },
-    nodeLineIdFormat(v) {
-      return this.selectItemsLabel(this.nodeLineIdOptions, v);
-    },
-
-    jsonParse(v) {
-      try {
-        return JSON.parse(v);
-      } catch (e) {
-        return [];
-      }
-    },
-
-
-    nationIdFormat(row, column) {
-      return this.selectItemsLabel(this.nationIdOptions, row.nationId);
-    },
-
-    isOnoroffFormat(v) {
-      return this.selectItemsLabel(this.isonoroffOptions, v);
     },
 
     cancel() {
@@ -986,6 +1148,7 @@ export default {
         other: undefined,
         transfers: undefined,
         streamSettingsCongestionControl: "cubic",
+        proxie: undefined,
       };
       this.resetForm("form");
     },
@@ -1014,14 +1177,6 @@ export default {
       this.reset();
       this.open = true;
       this.title = "新增节点";
-    },
-
-    handleUpdates() {
-      this.getVpnServerItems()
-      this.getVpnNodeNationItems()
-      this.reset();
-      this.form.magnification = undefined
-      this.title = "批量编辑节点";
     },
 
 
@@ -1075,7 +1230,7 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           this.showLoading();
-          if (this.form.nodeId != undefined) {
+          if (this.form.nodeId !== undefined) {
             updateVpnNode(this.form).then(response => {
               if (response.code === 0) {
                 this.msgSuccess("修改成功");
@@ -1121,11 +1276,19 @@ export default {
         this.stopLoading();
       });
     },
-
-
+    openQrCode(row) {
+      this.reset();
+      const nodeId = row.nodeId
+      getVpnNode(nodeId).then(response => {
+        let data = response.data;
+        this.form = data;
+        this.open_qrCode = true;
+        console.log(this.form)
+      });
+    },
     monitorOprn(row) {
       this.reset();
-      const nodeId = row.nodeId || this.ids
+      const nodeId = row.nodeId
       getVpnNode(nodeId).then(response => {
         let data = response.data;
         data.serverId = data.serverId

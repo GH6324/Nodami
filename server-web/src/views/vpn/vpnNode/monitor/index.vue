@@ -3,236 +3,127 @@
     <BasicLayout>
       <template #wrapper>
         <el-row :gutter="10" class="mb10">
-          <el-col :sm="8" :xs="24">
-            <el-card class="box-card" >
-              <el-col>
-                <el-col style="display: flex;justify-content: center">
+          <el-card class="stats-card" style="height: 530px">
+            <el-col>
+              <el-col style="display: flex;justify-content: center">
+                <el-col class="scrollable-radio-group">
                   <el-radio-group v-model="statusLabel" size="mini">
-                    <el-radio-button label="状态显示"></el-radio-button>
                     <el-radio-button label="延迟测速"></el-radio-button>
+                    <template v-for="(value, key) in serverLabelList">
+                      <el-radio-button :label="value.serverName"></el-radio-button>
+                    </template>
                   </el-radio-group>
                 </el-col>
-                <el-col>
-                  <div style="padding: 5px;">
-                    <div class="monitor" style="padding-top: 0px;" v-if="statusLabel=='状态显示'">
-                      <div class="monitor-content">
-                        <el-row :gutter="10">
-                          <el-col>
-                            <Cell label="主IP" :value="info.mainIp" border/>
-                            <Cell label="地区" :value="langShow(serverIdNodeNationFormat(serverLabel))" border/>
-                            <Cell label="总(↑|↓)"
-                                  :value="`${sizeFormat(info.netTraffic.recv)}/${sizeFormat(info.netTraffic.sent)}`"
-                                  border/>
-                            <Cell label="时(↑|↓)" :value="`${sizeFormat(info.netIO.up)}/${sizeFormat(info.netIO.down)}`"
-                                  border/>
-                            <Cell label="udp|tcp" :value="`${info.udpCount}|${info.tcpCount}`" border/>
-                            <Cell label="内存" :value="`${sizeFormat(info.mem.current)}/${sizeFormat(info.mem.total)}`"
-                                  border/>
-                            <Cell label="硬盘"
-                                  :value="`${sizeFormat(info.disk.current)}/${sizeFormat(info.disk.total)}`" border/>
-                            <el-row :gutter="10" class="monitor-progress">
-                              <el-col :sm="24" :md="6">
-                                CPU
-                              </el-col>
-                              <el-col :sm="24" :md="18">
-                                <el-progress
-                                  :color="customColors"
-                                  :text-inside="true"
-                                  :stroke-width="24"
-                                  :percentage="parseFloat(parseFloat(info.cpu).toFixed(2))"
-                                />
-                              </el-col>
-                            </el-row>
-                            <el-row :gutter="10" class="monitor-progress">
-                              <el-col :sm="24" :md="6">
-                                RAM
-                              </el-col>
-                              <el-col :sm="24" :md="18">
-                                <el-progress
-                                  :color="customColors"
-                                  :text-inside="true"
-                                  :stroke-width="24"
-                                  :percentage="parseFloat((parseFloat(info.mem.current)/parseFloat(info.mem.total)*100).toFixed(2)) || 0"
-                                />
-                              </el-col>
-                            </el-row>
-                            <el-row :gutter="10" class="monitor-progress">
-                              <el-col :sm="24" :md="6">
-                                硬盘
-                              </el-col>
-                              <el-col :sm="24" :md="18">
-                                <el-progress
-                                  :color="customColors"
-                                  :text-inside="true"
-                                  :stroke-width="24"
-                                  :percentage="parseFloat((parseFloat(info.disk.current)/parseFloat(info.disk.total)*100).toFixed(2)) || 0"
-                                />
-                              </el-col>
-                            </el-row>
-
-                            <el-row :gutter="10" class="monitor-progress" v-if="nodeInfo.transitProtocol">
-                              <el-col :sm="24" :md="6">中转诊断</el-col>
-                              <el-col :sm="24" :md="16" v-if="!zduan">
-                                <el-col v-for="v in ping">
-                                  <el-row>服务器ID:{{ v.inServerId }} -> 服务器ID:{{ v.toServerId }}
-                                    <el-tag  style="font-size: 10px;" size="mini" :type="(v.value >= 0 && v.value <1000)?'success':((v.value > 0 && v.value >=1000)?'warning':'danger')">
-                                      {{ v.value > -1 ? (v.value + " ms") : "---- sm" }}
-                                    </el-tag>
-                                  </el-row>
-                                </el-col>
-                              </el-col>
-                              <el-col :sm="24" :md="16" v-if="zduan == 1">
-                                <i class="el-icon-loading"></i>
-                              </el-col>
-                              <el-col :sm="24" :md="2">
-                                <el-button
-                                  size="mini"
-                                  type="primary" plain
-                                  @click="pingIp()"
-                                  style="padding: 6px 6px 6px 6px;margin-left: 20px;"
-                                >刷新
-                                </el-button>
-                              </el-col>
-                            </el-row>
-                            <el-row :gutter="10" class="monitor-progress" v-if="nodeInfo.frpServerId > 0">
-                              <el-col :sm="24" :md="6">
-                                FRP诊断
-                              </el-col>
-                              <el-col :sm="24" :md="18" v-if="!zduan">
-                            <span style="font-size: 12px;">客户端->服务端
-                              <span style="color:royalblue;" v-if="toFrp>0">{{ toFrp }} sm</span><span
-                                style="color:red;" v-if="toFrp==0">超时</span>   </span>
-                                <el-button
-                                  size="mini"
-                                  type="primary" plain
-                                  @click="pingIp()"
-                                  style="padding: 6px 6px 6px 6px;margin-left: 20px;"
-                                >刷新
-                                </el-button>
-                              </el-col>
-                              <el-col :sm="24" :md="18" v-if="zduan == 1">
-                                <i class="el-icon-loading"></i>
-                              </el-col>
-                            </el-row>
-                          </el-col>
-                        </el-row>
-                      </div>
-                    </div>
-                    <div class="monitor" style="padding-top: 0px;" v-if="statusLabel === '延迟测速'">
-                      <div class="monitor-content">
-                        <el-table :data="[{}]" style="width: 100%" :border="false">
-                          <el-table-column label="延迟" align="center">
-                            <template slot-scope="scope">
-                              <el-col style="height: 450px">
-                                <el-row :gutter="24" v-for="(value, index) in vpnNodePingTests" :key="index">
-                                  <el-col :span="10" style="text-align: right;padding:0px">{{ value.nationName }}:
-                                  </el-col>
-                                  <el-col :span="14">
-                                    <el-tag @click="pingTest(value,nodeInfo.nodeId)" v-if="value.ping != -2" style="width: 85px;font-size: 10px;" size="mini" :type="(value.ping >= 0 && value.ping <1000)?'success':((value.ping > 0 && value.ping >=1000)?'warning':'danger')">
-                                      {{ value.ping > -1 ? (value.ping + " ms") : "---- sm" }}
-                                    </el-tag>
-                                    <el-tag v-if="value.ping == -2" style="width: 55px;font-size: 10px;" size="mini"><i
-                                      class="el-icon-loading"></i></el-tag>
-                                  </el-col>
-                                </el-row>
-                              </el-col>
-                            </template>
-                          </el-table-column>
-
-                          <el-table-column label="测速" align="center">
-                            <template slot-scope="scope">
-                              <el-col style="height: 450px">
-                                <el-row :gutter="24" v-for="(value, index) in vpnNodeSpeedTests" :key="index">
-                                  <el-col :span="10" style="text-align: right;padding:0px">{{ value.nationName }}:
-                                  </el-col>
-                                  <el-col :span="14">
-                                    <el-tag @click="speedTest(value,nodeInfo.nodeId)" v-if="value.speedFlow >= 0"
-                                            style="width: 85px;font-size: 10px;" size="mini"
-                                            :type="(value.speedFlow > 1024*1024 )?'success':((value.speedFlow > 100*1024 && value.speedFlow <= 1024*1024)?'warning':'danger')">
-                                      {{ value.speedFlow > 0 ? (value.speed) : "---- M/s" }}
-                                    </el-tag>
-                                    <el-tag v-if="value.speedFlow < 0" style="width: 55px;font-size: 10px;" size="mini">
-                                      <i
-                                        class="el-icon-loading"></i></el-tag>
-                                  </el-col>
-                                </el-row>
-                              </el-col>
-                            </template>
-                          </el-table-column>
-                        </el-table>
-                      </div>
-                    </div>
-                  </div>
-                </el-col>
               </el-col>
-            </el-card>
-          </el-col>
-          <el-col :sm="16" :xs="24">
-            <el-card class="box-card" style="">
-              <el-col>
-                <el-row>
-                  <el-col :sm="18" :xs="24">
-                    <el-radio-group v-model="serverLabel" size="mini" @input="getServerInfo()">
+              <div class="compact-layout" v-if="statusLabel === '延迟测速'">
+                <div class="enhanced-dashboard">
 
-                      <el-radio-button v-if="nodeInfo.frpServerId" :label="nodeInfo.frpServerId">
-                        {{ 'FRP服务器 ID:' + nodeInfo.frpServerId }}
-                      </el-radio-button>
-
-                      <el-radio-button :label="nodeInfo.serverId">{{
-                          'VPN服务器 ID:' + nodeInfo.serverId
-                        }}
-                      </el-radio-button>
-                      <template v-for="(value, key) in nodeInfo.transfers">
-                        <el-radio-button :label="value.entranceServerId">
-                          {{ '中转服务器ID:' + value.entranceServerId }}
-                        </el-radio-button>
-                        <el-radio-button :label="value.exitServerId" v-if="value.exitServerId != nodeInfo.serverId &&  (!nodeInfo.transfers[key+1] || nodeInfo.transfers[key+1].entranceServerId != value.exitServerId)">
-                          {{ '中转服务器ID:' + value.exitServerId }}
-                        </el-radio-button>
+                  <!-- 节点延迟模块 -->
+                  <el-card class="elegant-card latency-panel" shadow="never">
+                    <div class="panel-header">
+                      <div class="title-group">
+                        <i class="el-icon-cpu header-icon"></i>
+                        <span class="panel-title">服务器连通测试</span>
+                      </div>
+                      <el-button
+                        size="mini"
+                        type="text"
+                        :loading="serverPinging"
+                        @click="setServerPinging"
+                        class="refresh-icon">
+                        <i class="el-icon-refresh-right"></i>
+                      </el-button>
+                    </div>
+                    <div class="latency-grid">
+                      <template v-for="(v, index) in serverPingList">
+                        <div class="latency-connection">
+                          <span class="node-id">服ID:{{v.inServerId}}</span>
+                          <div class="arrow-section" :class="getLatencyType(v.ping)">
+                            <span class="latency-value">
+                              <i v-if="v.pinging" class="el-icon-loading" style="margin-right: 4px;"></i>
+                              {{ formatLatency(v.ping) }}
+                            </span>
+                            <div class="arrow-line"></div>
+                            <div class="arrow-head">▶</div>
+                          </div>
+                          <span class="node-id" v-if="(index+1) === serverPingList.length">服ID:{{ v.toServerId }}</span>
+                        </div>
                       </template>
+                    </div>
+                  </el-card>
 
+                  <!-- 全球测试模块 -->
+                  <el-card class="elegant-card global-panel " shadow="never" style="position: relative">
+                    <div class="tabs-with-refresh">
+                      <el-tabs v-model="activeTestType" class="modern-tabs">
+                        <el-tab-pane name="ping">
+                          <template #label>
+                          <span class="tab-label">
+                            <i class="el-icon-timer"></i>
+                            节点延迟
+                          </span>
+                          </template>
+                          <div class="metric-grid">
+                            <div v-for="(v,i) in vpnNodePingTests" :key="'p'+i" class="metric-card" :class="getLatencyType(v.ping)">
+                              <div class="metric-header">
+                                <span class="nation-name">{{ v.nationName }}</span>
+                                <div class="metric">
+                                  <span class="metric-value">
+                                    <i v-if="v.pinging" class="el-icon-loading" style="margin-right: 4px;"></i>
+                                    {{ formatLatency(v.ping) }}
+                                  </span>
+                                  <div class="status-indicator"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </el-tab-pane>
 
-
-
-                    </el-radio-group>
-                  </el-col>
-                  <el-col :sm="6" :xs="24">
-                    <el-row>
+                        <el-tab-pane name="speed">
+                          <template #label>
+                          <span class="tab-label">
+                            <i class="el-icon-data-line"></i>
+                            节点测速
+                          </span>
+                          </template>
+                          <div class="metric-grid">
+                            <div v-for="(v,i) in vpnNodeSpeedTests" :key="'s'+i" class="metric-card" :class="getSpeedType(v.speed)">
+                              <div class="metric-header">
+                                <span class="nation-name">{{ v.nationName }}</span>
+                                <div class="metric">
+                                  <span class="metric-value">
+                                    <i v-if="v.speeding" class="el-icon-loading" style="margin-right: 4px;"></i>
+                                    {{ formatSpeed(v.speed) }}
+                                  </span>
+                                  <div class="status-indicator"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </el-tab-pane>
+                      </el-tabs>
                       <el-button
                         size="mini"
-                        type="primary" plain
-                        @click="reStartServer()"
-                        style="padding: 6px 6px 6px 6px"
-                      >重启服务器
+                        type="text"
+                        :loading="globalTesting"
+                        class="refresh-icon refresh-btn-absolute"
+                        @click="refreshGlobalTest"
+                        title="刷新当前测试数据">
+                        <i class="el-icon-refresh-right"></i>
                       </el-button>
-                      <el-button
-                        size="mini"
-                        type="success" plain
-                        @click="reStartSingBox()"
-                        style="padding: 6px 6px 6px 6px"
-                      >重启VPN服务
-                      </el-button>
-                    </el-row>
-                  </el-col>
-                </el-row>
-                <el-row style="margin-top: 10px">
-                  <el-radio-group v-model="logLabel" size="mini" @input="getServerInfo()">
-                    <el-radio-button label="ssh"></el-radio-button>
-                    <el-radio-button label="agent"></el-radio-button>
-                    <el-radio-button label="singBox"></el-radio-button>
-                    <el-radio-button label="frp"></el-radio-button>
-                    <el-radio-button label="access"></el-radio-button>
-                  </el-radio-group>
-
-                </el-row>
-                <el-row>
-                  <chatLog v-if="serverLabel" :logLabel="logLabel" :server-id="serverLabel"/>
-                </el-row>
-              </el-col>
+                    </div>
+                  </el-card>
+                </div>
+              </div>
 
 
-            </el-card>
-          </el-col>
+              <template v-for="(value, key) in serverLabelList">
+                <div class="compact-layout" v-show="statusLabel === value.serverName">
+                  <serverInfo :serverId="value.serverId" :showSSH="true"></serverInfo>
+                </div>
+              </template>
+            </el-col>
+          </el-card>
         </el-row>
       </template>
     </BasicLayout>
@@ -242,16 +133,16 @@
 <script>
 import BasicLayout from '@/layout/BasicLayout'
 import Cell from '@/components/Cell/index'
-import chatLog from '@/components/chatLog'
-
-import {langShow, sizeFormat} from '@/utils'
-import {info, listVpnServer, pingIp, reStartServer, reStartXray} from "@/api/vpn/vpnServer";
+import {pingServer} from "@/api/vpn/vpnServer";
+import ResourceProgress from '@/components/ResourceProgress'
 import {pingTest, speedTest} from "@/api/vpn/vpnNode";
 import {listVpnNodePing} from "@/api/vpn/vpnNodePing";
+import serverInfo from '@/components/serverInfo'
+
 
 export default {
   name: 'Monitor',
-  components: {BasicLayout, Cell, chatLog},
+  components: {serverInfo, BasicLayout, Cell, ResourceProgress},
   props: {
     nodeInfo: {
       type: Object,
@@ -260,51 +151,45 @@ export default {
   },
   data() {
     return {
-      logLabel: "ssh",
-      statusLabel: "状态显示",
+      logLabel: "命令终端",
+      statusLabel: "延迟测速",
+      serverLabelList: [],
+      activeTestType: "ping",
       serverLabel: this.nodeInfo.serverId,
-      serverIdNodeNationOptions: [],
-      toChu: undefined,
-      toVpn: undefined,
-      toFrp: undefined,
-      zduan: 0,
-      ping: 0,
-      timer: null,
-      info: {
-        cpu: 0.0, // float64
+      activeNetwork: undefined,
+      globalTesting: false,
+      ws: undefined,
+      serverInfo: {
+        publicIPv4: undefined,
+        publicIPv6: undefined,
+        networkBytes: undefined,
+        tcpConnections: undefined,
+        udpConnections: undefined,
+        cpuCores: undefined,
+        cpuUsage: undefined,
         mem: {
-          current: 0, // uint64
-          total: 0 // uint64
+          totalSpace: 0,
+          usedSpace: 0,
+          freeSpace: 0,
+          freePercent: 0
         },
         swap: {
-          current: 0, // uint64
-          total: 0 // uint64
+          totalSpace: 0,
+          usedSpace: 0,
+          freeSpace: 0,
+          freePercent: 0
         },
         disk: {
-          current: 0, // uint64
-          total: 0 // uint64
-        },
-        xray: {
-          state: '', // string
-          errorMsg: '', // string
-          version: '' // string
-        },
-        uptime: 0, // uint64
-        loads: [0.0, 0.0, 0.0], // array of float64
-        tcpCount: 0, // int32
-        udpCount: 0, // int32
-        netTraffic: {
-          sent: 0, // uint64
-          recv: 0 // uint64
-        },
-        netIO: {
-          up: 0,
-          down: 0
-        },
-        mainIp: ''
+          totalSpace: 0,
+          usedSpace: 0,
+          freeSpace: 0,
+          freePercent: 0
+        }
       },
       vpnNodeSpeedTests: [],
       vpnNodePingTests: [],
+      serverPingList: [],
+      serverPinging: false,
       customColors: [
         {color: '#13ce66', percentage: 20},
         {color: '#1890ff', percentage: 40},
@@ -314,119 +199,202 @@ export default {
       ]
     }
   },
-  beforeDestroy() {
-    if (this.timer) {
-      clearInterval(this.timer)
-      this.timer = null
-    }
-  },
   mounted() {
-    this.getServerInfo()
-    this.pingIp()
+    this.sortedServerLabelList()
+    this.initWebSocket()
+    this.setServerPinging()
     this.listVpnNodePing()
-    this.getVpnServerNodeNationItems()
-
-    this.timer = setInterval(() => {
-      this.getServerInfo()
-    }, 3000)
+  },
+  beforeDestroy() {
+    this.close()
   },
   methods: {
-    langShow,
-    speedTest(pingInfo, nodeId) {
-      pingInfo.speedFlow = -1
-      speedTest(nodeId, pingInfo.pingId).then(response => {
-        pingInfo.speed = sizeFormat(response.data * 1000) + "/s"
-        pingInfo.speedFlow = response.data
-      }).catch(e=>{
-        pingInfo.speed = 0
-        pingInfo.speedFlow = 0
-      })
-    },
+    sortedServerLabelList() {
+      const {serverId, frpServerId, transfers} = this.nodeInfo;
 
-    pingTest(pingInfo, nodeId) {
-      pingInfo.ping = -2
-      pingTest(nodeId, pingInfo.pingId).then(response => {
-        pingInfo.ping = response.data
-      })
-    },
-    getVpnServerNodeNationItems() {
-      this.getItems(listVpnServer, {pageSize: 10000}).then(res => {
-        this.serverIdNodeNationOptions = this.setItems(res, 'serverId', 'nationName')
-      })
-    },
-    serverIdNodeNationFormat(serverId) {
-      return this.selectItemsLabel(this.serverIdNodeNationOptions, serverId);
-    },
+      const labelList = [];
 
-    listVpnNodePing() {
-      listVpnNodePing({pageNum: 1, pageSize: 100,}).then(response => {
+      const forwardMap = new Map();
+      const reverseMap = new Map();
+
+      transfers.forEach(item => {
+        forwardMap.set(item.entranceServerId, item.exitServerId);
+        reverseMap.set(item.exitServerId, item.entranceServerId);
+      });
+
+      // 找到起点
+      let start = null;
+      for (let [entrance] of forwardMap) {
+        if (!reverseMap.has(entrance)) {
+          start = entrance;
+          break;
+        }
+      }
+
+      const visited = new Set();
+      const orderedIds = [];
+
+      let current = start;
+      while (current && !visited.has(current)) {
+        orderedIds.push(current);
+        visited.add(current);
+        current = forwardMap.get(current);
+      }
+
+      // 处理 orderedIds
+      orderedIds.forEach(id => {
+        if (id !== serverId) {
+          labelList.push({
+            serverId: id,
+            serverName: '中转服ID:' + id,
+          });
+        }
+      });
+
+      // FRP 服
+      if (frpServerId) {
+        labelList.push({
+          serverId: frpServerId,
+          serverName: 'FRP服ID:' + frpServerId,
+        });
+      }
+
+      // 最后是 VPN 本身
+      labelList.push({
+        serverId: serverId,
+        serverName: 'VPN服ID:' + serverId,
+      });
+
+      this.serverLabelList = labelList;
+
+      for (let i = 1; i < this.serverLabelList.length; i++) {
+        this.serverPingList.push({
+          inServerId: this.serverLabelList[i - 1].serverId,
+          toServerId: this.serverLabelList[i].serverId,
+          ping: 0,
+          pinging: false
+        })
+      }
+      console.log(this.serverPingList)
+    },
+    close() {
+      if (this.ws !== null) {
+        this.ws.close()
+      }
+    },
+    initWebSocket() {
+      if (this.ws) {
+        this.ws.close();
+        this.ws = null
+      }
+      return
+    },
+    async refreshGlobalTest(all = false) {
+      console.log("refreshGlobalTest")
+      this.globalTesting = true;
+      if (this.activeTestType === 'ping' || all) {
+        const promises = this.vpnNodePingTests.map((item, index) => {
+          item.pinging = true;
+          item.ping = 0;
+          return pingTest(this.nodeInfo.nodeId, item.pingId)
+            .then(ret => {
+              item.ping = ret.data;
+            })
+            .catch(() => {
+              item.ping = -1;
+            })
+            .finally(() => {
+              item.pinging = false;
+            });
+        });
+        await Promise.all(promises);
+      }
+
+      if (this.activeTestType === 'speed' || all) {
+        const promises = this.vpnNodeSpeedTests.map((item, index) => {
+          item.speeding = true;
+          item.speed = 0;
+          return speedTest(this.nodeInfo.nodeId, item.speedId)
+            .then(ret => {
+              item.speed = ret.data * 1000;
+            })
+            .catch(() => {
+              item.speed = -1;
+            })
+            .finally(() => {
+              item.speeding = false;
+            });
+        });
+        await Promise.all(promises);
+      }
+
+      this.globalTesting = false;
+    },
+    async setServerPinging() {
+      this.serverPinging = true;
+      const promises = this.serverPingList.map((item, index) => {
+        item.pinging = true;
+        item.ping = 0;
+        return pingServer(item.inServerId, item.toServerId)
+          .then(ret => {
+            item.ping = ret.data.value;
+          })
+          .catch(() => {
+            item.ping = -1;
+          })
+          .finally(() => {
+            item.pinging = false;
+          });
+      });
+      await Promise.all(promises);
+      this.serverPinging = false;
+    },
+    async  listVpnNodePing() {
+      await listVpnNodePing({pageNum: 1, pageSize: 100,}).then(response => {
         for (let i in response.data.list) {
           let pingInfo = response.data.list[i]
           this.vpnNodePingTests.push({
             nationName: pingInfo.nationName,
             ping: 0,
             pingId: pingInfo.pingId,
+            pinging: false,
           })
           this.vpnNodeSpeedTests.push({
             nationName: pingInfo.nationName,
-            speed: "-- M/s",
-            speedFlow: 0,
-            pingId: pingInfo.pingId,
+            speed: 0,
+            speedId: pingInfo.pingId,
+            speeding: false,
           })
         }
-
-
       });
+      this.refreshGlobalTest(true)
     },
-
-    pingIp() {
-      this.zduan = 1
-      pingIp(this.nodeInfo.nodeId).then(ret => {
-        this.ping = ret.data
-        console.log(ret)
-        console.log(this.ping)
-        this.zduan = 0
-      }).catch((e) => {
-        this.zduan = 0
-      })
+    getLatencyType(value) {
+      if (value < 0) return 'danger'
+      if (value === 0) return 'info'
+      if (value < 100) return 'success'
+      if (value < 1000) return 'warning'
+      if (value > 1000) return 'danger'
+      return 'danger'
     },
-
-    getServerInfo() {
-      info(this.serverLabel).then(ret => {
-        this.info = ret.data
-      })
+    formatSpeed(speed) {
+      if (speed < 0) return '超时'
+      if (speed === 0) return '-- MB/s'
+      return `${(speed / 1024 / 1024).toFixed(1)} MB/s`
     },
-
-    sizeFormat(d) {
-      return sizeFormat(d)
+    getSpeedType(speed) {
+      let value = speed / 1024 / 1024
+      if (value < 0) return 'danger'
+      if (value === 0) return 'info'
+      if (value < 3) return 'warning'
+      if (value > 3) return 'success'
+      return 'danger'
     },
-
-    reStartServer() {
-      const serverIds = this.serverLabel
-      this.$confirm('你确定要重启选中服务器?', "警告", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      }).then(function () {
-        return reStartServer(serverIds);
-      }).then(() => {
-        this.msgSuccess("提交成功");
-      }).catch(function () {
-      });
-    },
-
-    reStartSingBox() {
-      const serverIds = this.serverLabel
-      this.$confirm('你确定要重启选中服务器的singBox?', "警告", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      }).then(function () {
-        return reStartXray(serverIds);
-      }).then(() => {
-        this.msgSuccess("提交成功");
-      }).catch(function () {
-      });
+    formatLatency(value) {
+      if (value === -1) {
+        return "超时"
+      }
+      return value > 0 ? `${value} ms` : '-- ms'
     },
   }
 }
@@ -434,12 +402,286 @@ export default {
 
 <style lang="scss" scoped>
 
-.monitor {
 
-  .monitor-progress {
-    padding-top: 15px;
+/* 调整信息区域高度 */
+.compact-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .info-row {
+    flex: none;
+  }
+
+  .section.compact-section {
+    flex: 1;
+    min-height: 0; /* 允许内容收缩 */
+
+    &.resource-section {
+      flex: 2; /* 资源监控区域分配更多空间 */
+    }
+  }
+}
+
+
+// 全局卡片样式
+.stats-card {
+  .compact-layout {
+    padding: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+
+.enhanced-dashboard {
+  height: 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  --primary-color: #409EFF;
+  --success-color: #67C23A;
+  --warning-color: #E6A23C;
+  --danger-color: #F56C6C;
+  --bg-color: #f8fafc;
+}
+
+/* 通用卡片样式 */
+.elegant-card {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  transition: box-shadow 0.3s;
+
+  &:hover {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* 节点延迟面板 */
+.latency-grid {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  align-items: center;
+  padding: 16px;
+}
+
+.latency-connection {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  color: #606266;
+  font-size: 13px;
+}
+
+.node-id {
+  white-space: nowrap;
+}
+
+.arrow-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 8px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.latency-value {
+  margin-bottom: 2px;
+}
+
+.arrow-line {
+  width: 60px;
+  height: 1px;
+  background: currentColor;
+  position: relative;
+}
+
+.arrow-head {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+
+/* 全球测试面板 */
+.global-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  .el-tabs__content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-grid {
+    flex: 1;
+    max-height: 200px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .metric-card {
+    background: white;
+    border-radius: 6px;
+    padding: 10px;
+    transition: all 0.3s;
+    border-left: 3px solid;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .nation-name {
+        font-size: 10px;
+        color: #303133;
+        max-width: 80px;
+        white-space: nowrap; // 不换行
+        overflow: hidden; // 超出隐藏
+        text-overflow: ellipsis; // 超出显示省略号
+      }
+
+      .metric {
+        display: flex;
+        align-items: center;
+
+        .metric-value {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+        }
+
+        .status-indicator {
+          margin-left: 5px;
+          display: flex;
+          align-items: center;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: currentColor;
+        }
+      }
+    }
+  }
+
+
+}
+
+
+.success {
+  border-color: var(--success-color);
+  color: var(--success-color); // ✅ 设置 color
+}
+
+.warning {
+  border-color: var(--warning-color);
+  color: var(--warning-color);
+}
+
+.danger {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+}
+
+.info {
+  border-color: #909399;
+  color: #909399;
+}
+
+
+.refresh-icon {
+  padding: 4px;
+  color: #909399;
+  transition: transform 0.3s;
+
+  &:hover {
+    color: var(--primary-color);
+    transform: rotate(180deg);
+  }
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 2px solid #ebeef5;
+
+  .title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .header-icon {
+      font-size: 16px;
+      color: var(--primary-color);
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+    }
   }
 
 }
+
+.tabs-with-refresh {
+  position: relative;
+}
+
+.refresh-btn-absolute {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  color: #909399;
+  transition: transform 0.3s;
+
+  &:hover {
+    color: var(--primary-color);
+    transform: rotate(180deg);
+  }
+}
+
+.scrollable-radio-group {
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 4px 0;
+
+
+  ::v-deep .el-radio-group {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    border-radius: 5px;
+  }
+
+  ::v-deep .el-radio-button__inner {
+    margin-right: -1px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border: 0.1px solid #dcdfe6;
+  }
+
+  &::-webkit-scrollbar {
+    height: 0;
+  }
+}
+
 
 </style>

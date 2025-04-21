@@ -107,7 +107,7 @@
           type="warning" plain
           size="mini"
           :disabled="multiple"
-          @click="reStartXray"
+          @click="reStartVpnServer"
           v-hasPermi="['vpn/vpnServer/delete']"
         >重启VPN服务
         </el-button>
@@ -128,9 +128,9 @@
     <el-table :row-key='getrowkey' border ref="multipleTable" v-loading="loading" :data="vpnServerList"
               @selection-change="handleSelectionChange" @cell-mouse-enter="cellMouseEnter">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="160">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width"  min-width="150">
         <template slot-scope="scope">
-          <div style="display: flex; flex-wrap: wrap;">
+          <div style="display: flex; flex-wrap: wrap; justify-content: center;align-items: center">
             <el-button
               size="mini"
               plain
@@ -138,6 +138,14 @@
               @click="monitorOprn(scope.row)"
               v-hasPermi="['vpn/vpnServer/edit']"
             >详情
+            </el-button>
+            <el-button
+              size="mini"
+              plain
+              style="padding: 6px 6px 6px 6px;margin: 5px 5px 5px 5px;background: lightskyblue"
+              @click="openSsh(scope.row)"
+              v-hasPermi="['vpn/vpnServer/edit']"
+            >终端
             </el-button>
             <el-button
               size="mini"
@@ -159,7 +167,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="服务器" align="center" prop="serverName" width="215" show-overflow-tooltip>
+      <el-table-column label="服务器" align="center" prop="serverName" min-width="215" show-overflow-tooltip>
         <template slot-scope="scope">
           <el-col style="font-size: 12px;">
             <el-row type="flex" align="middle">
@@ -175,9 +183,8 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="监控" width="315">
+      <el-table-column label="监控" min-width="315">
         <template slot-scope="scope">
-
           <el-col style="font-size: 12px;">
             <el-row type="flex" justify="center" align="middle">
               <el-col :span="6">cpu:</el-col>
@@ -211,7 +218,7 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" width="330">
+      <el-table-column label="状态" align="center" min-width="330">
         <template slot-scope="scope">
           <el-col>
             <el-tag :type="scope.row.status == 1?'success':'danger'">
@@ -237,7 +244,7 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="其他信息" align="center" prop="serverName" width="230">
+      <el-table-column label="其他信息" align="center" prop="serverName" min-width="250" >
         <template slot-scope="scope">
           <el-col style="font-size: 12px;">
 
@@ -270,7 +277,7 @@
           </el-col>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createdAt">
+      <el-table-column label="创建时间" align="center" prop="createdAt" min-width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createdAt, '{m}-{d}') }}</span>
         </template>
@@ -288,13 +295,13 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="IP" prop="serverIp">
+            <el-form-item label="SSH IP" prop="serverIp">
               <el-input v-model="form.serverIp" placeholder="请输入服务器IP" style="width: 95%"/>
             </el-form-item>
             <el-form-item label="SSH端口" prop="serverSshProt">
               <el-input-number v-model="form.serverSshProt" :min="22" :max="65500" style="width: 150px"/>
             </el-form-item>
-            <el-form-item label="SSH用户名" prop="serverSshUser">
+            <el-form-item label="SSH用户" prop="serverSshUser">
               <el-input v-model="form.serverSshUser" placeholder="请输入SSH用户名" style="width: 150px"/>
             </el-form-item>
             <el-form-item label="SSH验证" prop="serverSshLoginType">
@@ -375,33 +382,34 @@
 
 
     <el-dialog title="诊断" :visible.sync="open_monitor" width="90%">
-      <monitor v-if="open_monitor" :serverInfo="form"/>
+      <monitor v-if="open_monitor" :serverId="form.serverId" :isPppoe="form.isPppoe"/>
+    </el-dialog>
+    <el-dialog title="终端" :visible.sync="open_ssh" width="90%">
+      <terminal v-if="open_ssh" :serverId="form.serverId" style="flex-grow: 1;position: relative;height: 600px"></terminal>
     </el-dialog>
   </div>
 </template>
+
 <script>
 import {
   addVpnServer,
   delVpnServer,
   getVpnServer,
-  listVpnNodeNation,
   listVpnServer,
-  pppoeReStart,
   reStartServer,
-  reStartXray,
+  reStartVpnServer,
   updateVpnServer,
-  updateVpnServers,
 } from "@/api/vpn/vpnServer";
-import {langShow, sizeFormat} from "@/utils";
+import {sizeFormat} from "@/utils";
 import CustomizeTag from "@/components/CustomizeTag/index.vue";
 import cityCascader from "@/components/cityCascader/index.vue";
 import monitor from "@/views/vpn/vpnServer/monitor/index.vue";
-import encodingJapanese from "encoding-japanese";
 import {listVpnServerGroup} from "@/api/vpn/vpnServerGroup";
+import terminal from "@/components/Terminal/index.vue";
 
 
 export default {
-  components: {monitor, CustomizeTag, cityCascader},
+  components: {terminal, monitor, CustomizeTag, cityCascader},
   name: "VpnServer",
   data() {
     return {
@@ -422,13 +430,13 @@ export default {
       // 是否显示弹出层
       open: false,
       open_monitor: false,
+      open_ssh: false,
       serverSshLoginTypeOptions: [],
 
       serverGroupOptions: [],
 
       isokronoOptions: [],
       zhichiOptions: [],
-      // statusOptions字典数据
       statusOptions: [],
       optionsOrderBy: [
         {
@@ -526,15 +534,21 @@ export default {
       this.isokronoOptions = response.data.values || [];
     });
 
-
     this.getDicts("vpn_status").then(response => {
       this.statusOptions = response.data.values || [];
     });
-    this.getList();
+    this.getList(true);
+    this.timer = setInterval(() => {
+      this.getList(false);
+    }, 5000)
+  },
+  beforeDestroy() {
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
   },
   methods: {
-    langShow,
-    listVpnNodeNation,
     sizeFormat,
 
     getVpnServerGroupItems() {
@@ -543,8 +557,10 @@ export default {
       })
     },
 
-    getList() {
-      this.loading = true;
+    getList(loading) {
+      if (loading) {
+        this.loading = true;
+      }
       listVpnServer(this.queryParams).then(response => {
         this.vpnServerList = response.data.list;
         this.total = response.data.total;
@@ -552,9 +568,6 @@ export default {
       });
     },
 
-    serverSshLoginTypeFormat(row, column) {
-      return this.selectDictLabel(this.serverSshLoginTypeOptions, row.serverSshLoginType);
-    },
 
     serverGroupIdFormat(row, column) {
       return this.selectItemsLabel(this.serverGroupOptions, row.serverGroupId)
@@ -577,8 +590,8 @@ export default {
         serverId: undefined,
         serverName: undefined,
         serverIp: undefined,
-        serverSshProt: undefined,
-        serverSshUser: undefined,
+        serverSshProt: 22,
+        serverSshUser: "root",
         serverSshPasswrod: undefined,
         serverSshPublicKey: undefined,
         serverSshLoginType: "password",
@@ -649,15 +662,6 @@ export default {
       });
     },
 
-    /** 修改按钮操作 */
-    handleUpdates() {
-      this.reset();
-      const serverId = this.ids
-      if (serverId) {
-        this.title = "批量修改服务器";
-      }
-
-    },
     /** 提交按钮 */
     submitForm: function (ref) {
       if (this.form.serverIp) {
@@ -721,6 +725,20 @@ export default {
         this.title = "详情";
       });
     },
+    openSsh(row) {
+      this.reset();
+      const serverId = row.serverId || this.ids
+      getVpnServer(serverId).then(response => {
+        let data = response.data;
+        data.serverSshLoginType = '' + data.serverSshLoginType
+        data.serverGroupId = '' + data.serverGroupId
+        data.status = '' + data.status
+        this.form = data;
+        console.log(this.form)
+        this.open_ssh = true;
+        this.title = "终端";
+      });
+    },
     reStartServer(row) {
       const serverIds = row.serverId || this.ids;
       this.$confirm('你确定要重启选中服务器?', "警告", {
@@ -734,27 +752,14 @@ export default {
       }).catch(function () {
       });
     },
-    reStartXray(row) {
+    reStartVpnServer(row) {
       const serverIds = row.serverId || this.ids;
       this.$confirm('你确定要重启选中服务器的xray?', "警告", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning"
       }).then(function () {
-        return reStartXray(serverIds);
-      }).then(() => {
-        this.msgSuccess("提交成功");
-      }).catch(function () {
-      });
-    },
-    pppoeReStart(row) {
-      const serverIds = row.serverId || this.ids;
-      this.$confirm('你确定要重新拨号选中服务器 如非拨号服务器将是无效操作', "警告", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      }).then(function () {
-        return pppoeReStart(serverIds);
+        return reStartVpnServer(serverIds);
       }).then(() => {
         this.msgSuccess("提交成功");
       }).catch(function () {

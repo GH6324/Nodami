@@ -16,25 +16,17 @@ import (
 )
 
 type vpnAgentService struct {
-	nodeStatus   chan []commonInfo.NodeStatus
-	logs         chan *commonInfo.LogUploadInfo
-	serverInfo   chan *commonInfo.ServerInfo
-	requestInfos chan []commonInfo.RequestInfo
+	serverInfo chan *commonInfo.ServerInfo
 }
 
 var VpnAgentService = new(vpnAgentService)
 
 func init() {
 	v := VpnAgentService
-	v.nodeStatus = make(chan []commonInfo.NodeStatus, 1000)
-	v.logs = make(chan *commonInfo.LogUploadInfo, 1000)
 	v.serverInfo = make(chan *commonInfo.ServerInfo, 1000)
-	v.requestInfos = make(chan []commonInfo.RequestInfo, 1000)
 	go func(s *vpnAgentService) {
 		for {
 			select {
-			case req := <-s.logs:
-				go logs(req)
 			case req := <-s.serverInfo:
 				go serverInfo(req)
 			}
@@ -42,15 +34,7 @@ func init() {
 	}(v)
 }
 
-func logs(req *commonInfo.LogUploadInfo) {
-	err := service.SaveLog(req.ServerId, req.LogName, service.NOCOLOR, req.Log)
-	if err != nil {
-		g.Log().Error(err)
-	}
-}
-
 func serverInfo(req *commonInfo.ServerInfo) {
-
 	mem := (float64(req.Mem.Current) / float64(req.Mem.Total)) * 100
 	disk := (float64(req.Disk.Current) / float64(req.Disk.Total)) * 100
 	_, err := dao.VpnServer.DB().Model(dao.VpnServer.Table).
@@ -298,16 +282,6 @@ func (c *vpnAgentService) SendTraffics(req *commonInfo.TrafficsInfo) (err error)
 		}
 	}
 	return
-}
-
-func (c *vpnAgentService) SendNodeStatus(req []commonInfo.NodeStatus) (err error) {
-	c.nodeStatus <- req
-	return err
-}
-
-func (c *vpnAgentService) SendLogMsg(req *commonInfo.LogUploadInfo) (err error) {
-	c.logs <- req
-	return err
 }
 
 func (c *vpnAgentService) SendServerInfo(req *commonInfo.ServerInfo) (err error) {

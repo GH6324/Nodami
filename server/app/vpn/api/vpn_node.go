@@ -226,7 +226,6 @@ func (c *vpnNode) NodeURLTest(r *ghttp.Request) {
 	pingId := r.GetInt("pingId")
 	sm, err := service.VpnNode.SpeedPing(r.GetCtx(), nodeId, pingId, false)
 	if err != nil {
-		sm = -1
 		g.Log().Error(err.Error())
 	}
 	c.SusJsonExit(r, sm)
@@ -237,7 +236,7 @@ func (c *vpnNode) NodeSpeedTest(r *ghttp.Request) {
 	pingId := r.GetInt("pingId")
 	speed, err := service.VpnNode.SpeedPing(r.GetCtx(), nodeId, pingId, true)
 	if err != nil {
-		c.FailJsonExit(r, err.Error())
+		g.Log().Error(err.Error())
 	}
 	c.SusJsonExit(r, speed)
 }

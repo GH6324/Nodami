@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -34,7 +33,7 @@ const (
 	DEBUG   = "DEBUG"
 )
 
-type server struct {
+type Server struct {
 	Id        int    `json:"Id"`
 	User      string `json:"User"`
 	Password  string `json:"Password"`
@@ -45,17 +44,18 @@ type server struct {
 	IsPppoe   bool
 	ProxyAddr string `json:"proxyAddr"`
 	sshClient *ssh.Client
+	SSHAddr   string
 }
 
 type sshServer struct {
-	sessions map[int]server
+	sessions map[int]Server
 }
 
 var SSHServer = &sshServer{
-	sessions: make(map[int]server),
+	sessions: make(map[int]Server),
 }
 
-func GetServer(serverId int, new bool) (*server, bool) {
+func GetServer(serverId int, new bool) (*Server, bool) {
 	lock := library.GetKeyLock("sshServer")
 	lock.Lock()
 	defer lock.Unlock()
@@ -66,7 +66,7 @@ func GetServer(serverId int, new bool) (*server, bool) {
 		if err != nil {
 			return nil, false
 		}
-		s = server{
+		s = Server{
 			Id:        vpnServerInfo.ServerId,
 			User:      vpnServerInfo.ServerSshUser,
 			Password:  vpnServerInfo.ServerSshPasswrod,
@@ -77,6 +77,11 @@ func GetServer(serverId int, new bool) (*server, bool) {
 			IsPppoe:   vpnServerInfo.IsPppoe == 1,
 			ProxyAddr: vpnServerInfo.ProxyAddr,
 		}
+
+		s.SSHAddr = fmt.Sprintf("%s:%d", strings.TrimSpace(s.Host), s.Port)
+		if net.ParseIP(strings.TrimSpace(s.Host)).To4() == nil {
+			s.SSHAddr = fmt.Sprintf("[%s]:%d", strings.TrimSpace(s.Host), s.Port)
+		}
 		SSHServer.sessions[serverId] = s
 	}
 
@@ -84,7 +89,7 @@ func GetServer(serverId int, new bool) (*server, bool) {
 
 }
 
-func ResGetServer(serverId int) (*server, bool) {
+func ResGetServer(serverId int) (*Server, bool) {
 	return GetServer(serverId, true)
 
 }
@@ -96,20 +101,20 @@ func Restart(serverId int) {
 
 			filePath := fmt.Sprintf("%s/%d", g.Cfg().GetString("server.LogPathAgent"), serverId)
 			os.RemoveAll(filePath)
-			SaveLog(x.Id, "ssh", INFO, "清理日志成功")
+			SaveLog(x.Id, INFO, "清理日志成功")
 
-			SaveLog(x.Id, "ssh", INFO, "开始删除ip缓存")
+			SaveLog(x.Id, INFO, "开始删除ip缓存")
 			cache.Del(fmt.Sprintf("%s:%d", global.ServerInfoToken, x.Id))
-			SaveLog(x.Id, "ssh", INFO, "删除ip缓存成功")
+			SaveLog(x.Id, INFO, "删除ip缓存成功")
 
 			if x.IsPppoe {
-				SaveLog(x.Id, "ssh", INFO, "拨号服务器检查拨号状态")
+				SaveLog(x.Id, INFO, "拨号服务器检查拨号状态")
 				if !x.PppoeReStart(false) {
-					SaveLog(x.Id, "ssh", ERROR, "重新拨号失败")
+					SaveLog(x.Id, ERROR, "重新拨号失败")
 				}
 			}
 
-			SaveLog(x.Id, "ssh", INFO, "开始启动")
+			SaveLog(x.Id, INFO, "开始启动")
 			x.run()
 		}
 	}()
@@ -119,14 +124,14 @@ func Stop(serverId int) {
 	go func() {
 		x, ok := ResGetServer(serverId)
 		if ok {
-			SaveLog(x.Id, "ssh", INFO, "删除日志")
+			SaveLog(x.Id, INFO, "删除日志")
 			filePath := fmt.Sprintf("%s/%d", g.Cfg().GetString("server.LogPathAgent"), serverId)
 			os.RemoveAll(filePath)
 
-			SaveLog(x.Id, "ssh", INFO, "删除ip缓存")
+			SaveLog(x.Id, INFO, "删除ip缓存")
 			cache.Del(fmt.Sprintf("%s:%d", global.ServerInfoToken, x.Id))
 
-			SaveLog(x.Id, "ssh", INFO, "开始停止")
+			SaveLog(x.Id, INFO, "开始停止")
 			x.stop()
 		}
 	}()
@@ -136,14 +141,14 @@ func UnInstall(serverId int) {
 	go func() {
 		x, ok := ResGetServer(serverId)
 		if ok {
-			SaveLog(x.Id, "ssh", INFO, "删除日志")
+			SaveLog(x.Id, INFO, "删除日志")
 			filePath := fmt.Sprintf("%s/%d", g.Cfg().GetString("server.LogPathAgent"), serverId)
 			os.RemoveAll(filePath)
 
-			SaveLog(x.Id, "ssh", INFO, "删除ip缓存")
+			SaveLog(x.Id, INFO, "删除ip缓存")
 			cache.Del(fmt.Sprintf("%s:%d", global.ServerInfoToken, x.Id))
 
-			SaveLog(x.Id, "ssh", INFO, "开始停止")
+			SaveLog(x.Id, INFO, "开始停止")
 			x.stop()
 		}
 	}()
@@ -153,52 +158,42 @@ func Reboot(serverId int) {
 	go func() {
 		x, ok := ResGetServer(serverId)
 		if ok {
-			SaveLog(x.Id, "ssh", INFO, "删除日志")
+			SaveLog(x.Id, INFO, "删除日志")
 			filePath := fmt.Sprintf("%s/%d", g.Cfg().GetString("server.LogPathAgent"), serverId)
 			os.RemoveAll(filePath)
 
-			SaveLog(x.Id, "ssh", INFO, "删除ip缓存")
+			SaveLog(x.Id, INFO, "删除ip缓存")
 			cache.Del(fmt.Sprintf("%s:%d", global.ServerInfoToken, x.Id))
 
-			SaveLog(x.Id, "ssh", INFO, "开始重启服务器")
+			SaveLog(x.Id, INFO, "开始重启服务器")
 			client, err := x.login()
 			if err != nil {
-				SaveLog(x.Id, "ssh", ERROR, err.Error())
+				SaveLog(x.Id, ERROR, err.Error())
 				return
 			}
 			defer client.Close()
 
 			session, err := client.NewSession()
 			if err != nil {
-				SaveLog(x.Id, "ssh", ERROR, err.Error())
+				SaveLog(x.Id, ERROR, err.Error())
 				return
 			}
 			defer session.Close()
 
 			_, err = session.Output("reboot")
 			if err != nil {
-				SaveLog(x.Id, "ssh", ERROR, err.Error())
+				SaveLog(x.Id, ERROR, err.Error())
 			}
 		}
 	}()
 }
-func SaveLog(serverId int, logName, level, msg string) (err error) {
-	_, fn, line, _ := runtime.Caller(1)
-	wd, err := filepath.Abs(".")
-	if err != nil {
-		wd = ""
-	}
-
-	fName, err := filepath.Rel(wd, fn)
-	if err != nil {
-		fName = fn
-	}
+func SaveLog(serverId int, level, msg string) (err error) {
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
-	log := fmt.Sprintf("[%s] [%s] [%s:%d] [%s]", currentTime, level, fName, line, msg)
+	log := fmt.Sprintf("[%s] [%s]  [%s]", currentTime, level, msg)
 	if level == NOCOLOR {
 		log = msg
 	}
-	filePath := fmt.Sprintf("%s/%d/%s.log", g.Cfg().GetString("server.LogPathAgent"), serverId, logName)
+	filePath := fmt.Sprintf("%s/%d/ssh.log", g.Cfg().GetString("server.LogPathAgent"), serverId)
 
 	dir := filepath.Dir(filePath)
 	if _, err = os.Stat(dir); os.IsNotExist(err) {
@@ -209,7 +204,6 @@ func SaveLog(serverId int, logName, level, msg string) (err error) {
 	}
 
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	//file, err := os.Open(filePath)
 	if err != nil {
 		return
 	}
@@ -234,6 +228,8 @@ func SaveLog(serverId int, logName, level, msg string) (err error) {
 	if err != nil {
 		return
 	}
+
+	commonInfo.CheckAndRotateLogFile(filePath, 3*1024*1024)
 
 	return
 }
@@ -271,21 +267,9 @@ func removeFirstLine(filePath string) error {
 	return err
 }
 
-func GetLog(serverId int, logName string) string {
-	//red := func(msg string) string {
-	//	return color.Red.Sprintf(msg)
-	//}
-	//yellow := func(msg string) string {
-	//	return color.Yellow.Sprintf(msg)
-	//}
-	//green := func(msg string) string {
-	//	return color.Green.Sprintf(msg)
-	//}
-	//blue := func(msg string) string {
-	//	return color.Blue.Sprintf(msg)
-	//}
+func GetLog(serverId int) string {
 
-	filePath := fmt.Sprintf("%s/%d/%s.log", g.Cfg().GetString("server.LogPathAgent"), serverId, logName)
+	filePath := fmt.Sprintf("%s/%d/ssh.log", g.Cfg().GetString("server.LogPathAgent"), serverId)
 	file, err := os.Open(filePath)
 	if err != nil {
 		return ""
@@ -306,25 +290,10 @@ func GetLog(serverId int, logName string) string {
 	}
 
 	// 判断文件行数是否大于2000行
-	if len(lines) > 2000 {
+	if len(lines) > 1000 {
 		// 只保留最后2000行
-		lines = lines[len(lines)-2000:]
+		lines = lines[len(lines)-1000:]
 	}
-
-	//logList := make([]string, 0)
-	//for _, v := range lines {
-	//	if strings.Contains(strings.ToLower(v), "info") {
-	//		logList = append(logList, green(v))
-	//	} else if strings.Contains(strings.ToLower(v), "warn") {
-	//		logList = append(logList, yellow(v))
-	//	} else if strings.Contains(strings.ToLower(v), "error") {
-	//		logList = append(logList, red(v))
-	//	} else if strings.Contains(strings.ToLower(v), "debug") {
-	//		logList = append(logList, blue(v))
-	//	} else {
-	//		logList = append(logList, v)
-	//	}
-	//}
 
 	// 将切片中的行数据拼接为字符串
 	result := strings.Join(lines, "\n")
@@ -360,7 +329,7 @@ func setRunSessions(serverId int, session *ssh.Client) {
 	}
 }
 
-func (x *server) login() (client *ssh.Client, err error) {
+func (x *Server) login() (client *ssh.Client, err error) {
 
 	config := &ssh.ClientConfig{
 		User:            strings.TrimSpace(x.User),
@@ -381,7 +350,6 @@ func (x *server) login() (client *ssh.Client, err error) {
 			ssh.PublicKeys(key),
 		}
 	}
-	SSHAddr := fmt.Sprintf("%s:%d", strings.TrimSpace(x.Host), x.Port)
 
 	// 如果设置了代理地址，使用 SOCKS5 代理
 	if strings.TrimSpace(x.ProxyAddr) != "" {
@@ -409,7 +377,7 @@ func (x *server) login() (client *ssh.Client, err error) {
 		}
 
 		var conn net.Conn
-		conn, err = dialer.Dial("tcp", SSHAddr)
+		conn, err = dialer.Dial("tcp", x.SSHAddr)
 		if err != nil {
 			return
 		}
@@ -417,7 +385,7 @@ func (x *server) login() (client *ssh.Client, err error) {
 		var clientConn ssh.Conn
 		var chans <-chan ssh.NewChannel
 		var reqs <-chan *ssh.Request
-		clientConn, chans, reqs, err = ssh.NewClientConn(conn, SSHAddr, config)
+		clientConn, chans, reqs, err = ssh.NewClientConn(conn, x.SSHAddr, config)
 		if err != nil {
 			return
 		}
@@ -425,7 +393,7 @@ func (x *server) login() (client *ssh.Client, err error) {
 		client = ssh.NewClient(clientConn, chans, reqs)
 	} else {
 		// 直接连接
-		client, err = ssh.Dial("tcp", SSHAddr, config)
+		client, err = ssh.Dial("tcp", x.SSHAddr, config)
 		if err != nil {
 			return
 		}
@@ -435,7 +403,7 @@ func (x *server) login() (client *ssh.Client, err error) {
 	}
 	return
 }
-func (x *server) run() {
+func (x *Server) run() {
 	lock := library.GetKeyLock("RunXray", x.Id)
 	lock.Lock()
 	defer lock.Unlock()
@@ -444,7 +412,7 @@ func (x *server) run() {
 	var err error
 	defer func() {
 		if err != nil {
-			SaveLog(x.Id, "ssh", ERROR, err.Error())
+			SaveLog(x.Id, ERROR, err.Error())
 			return
 		}
 	}()
@@ -481,10 +449,10 @@ func (x *server) run() {
 			if !strings.HasSuffix(line, "\n") {
 				line += "\n"
 			}
-			SaveLog(x.Id, "ssh", INFO, line)
+			SaveLog(x.Id, INFO, line)
 		}
 		if err = scanner.Err(); err != nil {
-			SaveLog(x.Id, "ssh", ERROR, err.Error())
+			SaveLog(x.Id, ERROR, err.Error())
 		}
 	}(out)
 
@@ -495,10 +463,10 @@ func (x *server) run() {
 			if !strings.HasSuffix(line, "\n") {
 				line += "\n"
 			}
-			SaveLog(x.Id, "ssh", INFO, line)
+			SaveLog(x.Id, INFO, line)
 		}
 		if err = scanner.Err(); err != nil {
-			SaveLog(x.Id, "ssh", ERROR, err.Error())
+			SaveLog(x.Id, ERROR, err.Error())
 		}
 	}(errPipe)
 
@@ -521,7 +489,7 @@ func (x *server) run() {
 
 	cmdString := fmt.Sprintf(`%s && %s && %s && %s chmod +x start.sh && %s ./start.sh`, dnsCmd, curlInstallCmd, agentDomCmd, isSudo, isSudo)
 
-	SaveLog(x.Id, "ssh", INFO, cmdString)
+	SaveLog(x.Id, INFO, cmdString)
 	err = session.Start(cmdString)
 	if err != nil {
 		return
@@ -533,7 +501,7 @@ func (x *server) run() {
 	}
 	return
 }
-func (x *server) stop() {
+func (x *Server) stop() {
 
 	lock := library.GetKeyLock("StopXray", x.Id)
 	lock.Lock()
@@ -543,7 +511,7 @@ func (x *server) stop() {
 	var err error
 	defer func() {
 		if err != nil {
-			SaveLog(x.Id, "ssh", ERROR, err.Error())
+			SaveLog(x.Id, ERROR, err.Error())
 			return
 		}
 	}()
@@ -561,13 +529,13 @@ func (x *server) stop() {
 	}
 	output, err := x.combinedOutput(client, cmdSting)
 	if err != nil {
-		SaveLog(x.Id, "ssh", ERROR, err.Error())
+		SaveLog(x.Id, ERROR, err.Error())
 		return
 	}
-	SaveLog(x.Id, "ssh", INFO, output)
+	SaveLog(x.Id, INFO, output)
 }
 
-func (x *server) combinedOutput(client *ssh.Client, sh string) (output string, err error) {
+func (x *Server) combinedOutput(client *ssh.Client, sh string) (output string, err error) {
 	session, err := client.NewSession()
 	if err != nil {
 		return
@@ -583,17 +551,24 @@ func (x *server) combinedOutput(client *ssh.Client, sh string) (output string, e
 	return
 }
 
-func PingIp(serverId int, ip string) (ping float64, err error) {
+func PingIp(serverId int, pingServerId int) (ping float64, err error) {
 
 	x, ok := GetServer(serverId, false)
 	if !ok {
-		err = fmt.Errorf("不存在的服务器")
+		err = fmt.Errorf("不存在的服务器:%d", serverId)
 		return
 	}
 
+	pingX, ok := GetServer(pingServerId, false)
+	if !ok {
+		err = fmt.Errorf("不存在的服务器:%d", pingServerId)
+		return
+	}
+	ip := pingX.Host
+
 	client, err := x.login()
 	if err != nil {
-		SaveLog(x.Id, "ssh", ERROR, fmt.Sprintf("登录远程服务器%s:%d\n代理:%s\n错误:%s", x.ProxyAddr, x.Port, x.ProxyAddr, err.Error()))
+		SaveLog(x.Id, ERROR, fmt.Sprintf("登录远程服务器%s:%d\n代理:%s\n错误:%s", x.ProxyAddr, x.Port, x.ProxyAddr, err.Error()))
 		return
 	}
 	defer client.Close()
@@ -631,12 +606,12 @@ func PingIp(serverId int, ip string) (ping float64, err error) {
 	pingCombined := "ping -c 3 " + ip
 	output, err := x.combinedOutput(client, pingCombined)
 	if err != nil {
-		SaveLog(x.Id, "ssh", ERROR, fmt.Sprintf("%s combinedOutput失败: %s", pingCombined, err.Error()))
+		SaveLog(x.Id, ERROR, fmt.Sprintf("%s combinedOutput失败: %s", pingCombined, err.Error()))
 	}
 
 	averageResponseTime, err := parsePingOutput(strings.NewReader(string(output)))
 	if err != nil {
-		SaveLog(x.Id, "ssh", ERROR, fmt.Sprintf("%s parsePingOutput失败: %s", pingCombined, err.Error()))
+		SaveLog(x.Id, ERROR, fmt.Sprintf("%s parsePingOutput失败: %s", pingCombined, err.Error()))
 		return
 	}
 	ping, err = strconv.ParseFloat(averageResponseTime, 64)
@@ -644,62 +619,62 @@ func PingIp(serverId int, ip string) (ping float64, err error) {
 	return
 }
 
-func (x *server) PppoeReStart(enforce bool) bool {
+func (x *Server) PppoeReStart(enforce bool) bool {
 	lock := commonInfo.GetKeyLock("PppoeReStart", x.Id)
 	lock.Lock()
 	defer lock.Unlock()
 
 	client, err := x.login()
 	if err != nil {
-		SaveLog(x.Id, "ssh", ERROR, "登录远程服务器失败: "+err.Error())
+		SaveLog(x.Id, ERROR, "登录远程服务器失败: "+err.Error())
 		return false
 	}
 	defer client.Close()
 
 	output, err := x.combinedOutput(client, "pppoe-status")
 	if err != nil {
-		SaveLog(x.Id, "ssh", WARN, "拨号服务器拨号状态: "+err.Error())
+		SaveLog(x.Id, WARN, "拨号服务器拨号状态: "+err.Error())
 	}
 
 	if !strings.Contains(output, "running") {
-		SaveLog(x.Id, "ssh", INFO, "拨号状态 未检测到 准备重拨")
+		SaveLog(x.Id, INFO, "拨号状态 未检测到 准备重拨")
 		enforce = true
 	}
 
 	if strings.Contains(output, "running") {
 		if enforce {
-			SaveLog(x.Id, "ssh", INFO, "断开拨号")
+			SaveLog(x.Id, INFO, "断开拨号")
 			output, err = x.combinedOutput(client, "adsl-stop")
 			if err != nil {
-				SaveLog(x.Id, "ssh", ERROR, "拨号服务器断开拨号异常: "+err.Error()+"  output:"+output)
+				SaveLog(x.Id, ERROR, "拨号服务器断开拨号异常: "+err.Error()+"  output:"+output)
 			}
 			x.combinedOutput(client, "ps -ef|grep ppp*|grep -v grep|awk '{print $2}'| xargs kill -9")
 
 		} else {
-			//SaveLog(x.Id, "ssh", INFO, "拨号状态正常 无需重拨")
+			//SaveLog(x.Id,  INFO, "拨号状态正常 无需重拨")
 			return true
 		}
 	}
 
 	if enforce {
-		SaveLog(x.Id, "ssh", INFO, "重新拨号")
+		SaveLog(x.Id, INFO, "重新拨号")
 		output, err = x.combinedOutput(client, "adsl-start")
 		if err != nil {
-			SaveLog(x.Id, "ssh", ERROR, "拨号服务器拨号异常: "+err.Error()+"  output:"+output)
+			SaveLog(x.Id, ERROR, "拨号服务器拨号异常: "+err.Error()+"  output:"+output)
 			return false
 		}
 
 		output, err = x.combinedOutput(client, "pppoe-status")
 		if err != nil {
-			SaveLog(x.Id, "ssh", ERROR, "拨号服务器重拨后状态异常: "+err.Error())
+			SaveLog(x.Id, ERROR, "拨号服务器重拨后状态异常: "+err.Error())
 			return false
 		}
 
 		if !strings.Contains(output, "running") {
-			SaveLog(x.Id, "ssh", ERROR, "拨号服务器重拨后状态异常: "+output)
+			SaveLog(x.Id, ERROR, "拨号服务器重拨后状态异常: "+output)
 			return false
 		}
-		SaveLog(x.Id, "ssh", INFO, "重拨完成")
+		SaveLog(x.Id, INFO, "重拨完成")
 	}
 	return true
 }

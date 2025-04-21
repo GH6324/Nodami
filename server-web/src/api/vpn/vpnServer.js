@@ -66,19 +66,6 @@ export function listVpnNodeNation(query) {
   })
 }
 
-// Vpn服务器状态修改
-export function changeVpnServerStatus(serverId, status) {
-  const data = {
-    serverId,
-    status
-  }
-  return request({
-    url: '/vpn/vpnServer/changeStatus',
-    method: 'put',
-    data: data
-  })
-}
-
 
 export function reStartServer(serverIds) {
   return request({
@@ -90,9 +77,9 @@ export function reStartServer(serverIds) {
   })
 }
 
-export function reStartXray(serverIds) {
+export function reStartVpnServer(serverIds) {
   return request({
-    url: '/vpn/vpnServer/reStartXray',
+    url: '/vpn/vpnServer/reStartVpnServer',
     method: 'post',
     data: {
       ids: serverIds
@@ -135,12 +122,13 @@ export function info(serverId) {
 }
 
 
-export function pingIp(vpnNodeId) {
+export function pingServer(inServerId,toServerId) {
   return request({
-    url: '/vpn/vpnServer/pingIp',
+    url: '/vpn/vpnServer/pingServer',
     method: 'post',
     data: {
-      vpnNodeId: vpnNodeId,
+      inServerId: inServerId,
+      toServerId: toServerId,
     }
   })
 }

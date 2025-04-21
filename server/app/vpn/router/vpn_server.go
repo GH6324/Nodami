@@ -36,10 +36,10 @@ func init() {
 				group.PUT("changeStatus", api.VpnServer.ChangeStatus)
 				group.POST("reStartServer", api.VpnServer.ReStartServer)
 				group.POST("pppoeReStart", api.VpnServer.PppoeReStart)
-				group.POST("reStartXray", api.VpnServer.ReStartXray)
+				group.POST("reStartVpnServer", api.VpnServer.ReStartVpnServer)
 				group.POST("log", api.VpnServer.Log)
 				group.POST("info", api.VpnServer.Info)
-				group.POST("pingIp", api.VpnServer.PingIp)
+				group.POST("pingServer", api.VpnServer.PingServer)
 
 			})
 		})

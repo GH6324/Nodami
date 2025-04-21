@@ -2,6 +2,7 @@ package router
 
 import (
 	"gfast/app/vpnClient/api"
+
 	"github.com/gogf/gf/frame/g"
 	"github.com/gogf/gf/net/ghttp"
 )
@@ -16,5 +17,7 @@ func init() {
 		group.POST("/client/subscription", vpnClientApi.Subscription)
 		group.GET("/client/subscription/:subscriptionID", vpnClientApi.Subscription)
 		group.POST("/client/subscription/:subscriptionID", vpnClientApi.Subscription)
+
 	})
+
 }

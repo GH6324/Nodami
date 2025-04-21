@@ -30,20 +30,6 @@ func Subscription(client mqtt.Client) {
 		logrus.Error(token.Error())
 	}
 
-	if token := client.Subscribe("/agent/sendNodeStatus", 1, func(client mqtt.Client, msg mqtt.Message) {
-		go func() {
-			req := &commonInfo.NodeStatusReq{}
-			err := decrypt(msg.Payload(), req)
-			if err != nil {
-				logrus.Error(err.Error())
-				return
-			}
-		}()
-
-	}); token.Wait() && token.Error() != nil {
-		logrus.Error(token.Error())
-	}
-
 	if token := client.Subscribe("/agent/sendServerIPs", 1, func(client mqtt.Client, msg mqtt.Message) {
 		go func() {
 			req := &commonInfo.ServerIPsInfo{}
@@ -58,19 +44,7 @@ func Subscription(client mqtt.Client) {
 	}); token.Wait() && token.Error() != nil {
 		logrus.Error(token.Error())
 	}
-	if token := client.Subscribe("/agent/sendLogMsg", 0, func(client mqtt.Client, msg mqtt.Message) {
-		go func() {
-			req := &commonInfo.LogUploadInfo{}
-			err := decrypt(msg.Payload(), req)
-			if err != nil {
-				logrus.Error(err.Error())
-				return
-			}
-			service.VpnAgentService.SendLogMsg(req)
-		}()
-	}); token.Wait() && token.Error() != nil {
-		logrus.Error(token.Error())
-	}
+
 	if token := client.Subscribe("/agent/sendServerInfo", 1, func(client mqtt.Client, msg mqtt.Message) {
 
 		go func() {

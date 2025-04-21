@@ -9,6 +9,9 @@ import './assets/styles/element-variables.scss'
 
 import '@/assets/styles/index.scss' // global css
 import '@/assets/styles/ruoyi.scss' // ruoyi css
+import 'xterm/css/xterm.css'
+
+
 import App from './App'
 import store from './store'
 import router from './router'
@@ -56,23 +59,6 @@ Vue.prototype.getUpFileUrl = getUpFileUrl
 Vue.prototype.apiUrl = process.env.VUE_APP_BASE_API
 Vue.prototype.charts = require('echarts')
 
-Vue.prototype.languageMap = {
-  "简体中文": "zh_cn",
-  "中文繁體": "zh_tw",
-  "English": "en",
-  "한국인": "ko",
-  "日本語": "jp",
-}
-Vue.prototype.currencyMap = {
-  "usd": "美元",
-  "rmb": "人民币",
-  "eur": "欧元",
-}
-Vue.prototype.symbolMap = {
-  "usd": "$",
-  "rmb": "¥",
-  "eur": "€",
-}
 
 Vue.prototype.msgSuccess = function (msg) {
   this.$message({showClose: true, message: msg, type: "success"});
@@ -80,6 +66,9 @@ Vue.prototype.msgSuccess = function (msg) {
 
 Vue.prototype.msgError = function (msg) {
   this.$message({showClose: true, message: msg, type: "error"});
+}
+Vue.prototype.msgWarning = function (msg) {
+  this.$message({showClose: true, message: msg, type: "warning"});
 }
 
 Vue.prototype.msgInfo = function (msg) {

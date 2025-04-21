@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <pre ref="logContent" class="log-content" v-html="getColoredLog()" />
+  <div class="wrapper">
+    <pre ref="logContent" class="log-content" v-html="getColoredLog()"></pre>
   </div>
 </template>
 
@@ -66,7 +66,7 @@ export default {
     },
     setLog() {
       // this.coloredLog = ""
-      log(this.serverId,this.logLabel).then(response => {
+      log(this.serverId, this.logLabel).then(response => {
         this.setColoredLog(response.data)
         this.$nextTick(() => {
           const container = this.$refs.logContent
@@ -82,24 +82,37 @@ export default {
       this.coloredLog = converter.toHtml(text)
     },
     scrollToEnd() {
-      const container = this.$refs.logContent
-      container.scrollTop = container.scrollHeight
-      this.scrollHeight = container.scrollTop
+      const el = this.$refs.logContent
+      this.$nextTick(() => {
+        el.scrollTop = el.scrollHeight
+      })
     }
   }
 }
 </script>
 
 <style scoped>
-.log-content {
-  background-color: rgba(0,0,0,0.9);
-  border-radius: 5px;
-  padding: 5px;
-  color: #969799;
-  border: 1px solid #ccc;
-  overflow: auto;
-  height: 460px; /* 或其他合适的高度 */
-  /*white-space: pre-wrap;*/
-  /*box-sizing: border-box;*/
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0; /* 关键：允许子弹性盒收缩 */
 }
+
+.log-content {
+  flex: 1 1 auto;               /* 相当于 flex-grow:1; flex-shrink:1; flex-basis:auto */
+  min-height: 0;                /* 防止内容撑破父级 */
+  max-height: 540px;
+  overflow: auto;
+
+  background: #000;
+  color: #969799;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px 12px;
+
+  white-space: pre-wrap;        /* 保留换行并自动折行 */
+  margin: 0;
+}
+
 </style>
