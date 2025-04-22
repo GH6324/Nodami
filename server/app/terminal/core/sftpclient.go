@@ -189,9 +189,9 @@ func shouldIgnoreInterface(iface string) bool {
 }
 
 func (sclient *SSHClient) GetPublicIP() string {
-	ip, err := sclient.RunCommand("curl -s https://api.ipify.org")
+	ip, err := sclient.RunCommand("curl -s http://4.ipw.cn/")
 	if err != nil {
-		return "_"
+		return ""
 	}
 	return strings.TrimSpace(ip)
 }
@@ -290,6 +290,26 @@ func (sclient *SSHClient) GetDiskInfo() (*DiskInfo, error) {
 
 func (sclient *SSHClient) GetConnections() (tcp, udp int, err error) {
 	var tcpConnections, udpConnections string
+	// 检查 netstat 是否存在
+	_, err = sclient.RunCommand("command -v netstat >/dev/null 2>&1")
+	if err != nil {
+		// 自动安装 netstat 所属的包（net-tools）
+		_, installErr := sclient.RunCommand(`
+			if [ -f /etc/debian_version ]; then
+				sudo apt-get update && sudo apt-get install -y net-tools
+			elif [ -f /etc/redhat-release ]; then
+				sudo yum install -y net-tools
+			elif command -v apk >/dev/null 2>&1; then
+				sudo apk add net-tools
+			else
+				exit 1
+			fi
+		`)
+		if installErr != nil {
+			err = fmt.Errorf("netstat 未安装，且安装失败: %v", installErr)
+			return
+		}
+	}
 	tcpConnections, err = sclient.RunCommand("netstat -ant | grep ESTABLISHED | wc -l")
 	if err != nil {
 		err = fmt.Errorf("获取TCP连接数失败: %v", err)
