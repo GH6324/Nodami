@@ -147,7 +147,6 @@ download_agent_zip() {
 
   # -- ⑤ 解压 ---------------------------------------------------------------
   cecho skyBlue "解压到 $AGENT_DIR ..."
-  rm -rf "$AGENT_DIR"
   unzip -qo "$ZIP_PATH" -d "$PWD"
   chmod +x "$AGENT_DIR/agent"
 }
