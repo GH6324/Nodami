@@ -125,8 +125,7 @@
         </el-select>
       </el-col>
     </el-row>
-    <el-table :row-key='getrowkey' border ref="multipleTable" v-loading="loading" :data="vpnServerList"
-              @selection-change="handleSelectionChange" @cell-mouse-enter="cellMouseEnter">
+    <el-table :row-key='getrowkey' border ref="multipleTable" v-loading="loading" :data="vpnServerList" @selection-change="handleSelectionChange" @cell-mouse-enter="cellMouseEnter">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width"  min-width="150">
         <template slot-scope="scope">
@@ -561,10 +560,28 @@ export default {
       if (loading) {
         this.loading = true;
       }
+
+      // ✅ 记录旧选中项 ID
+      var oldSelection = [];
+      if (this.$refs.multipleTable && this.$refs.multipleTable.selection) {
+        oldSelection = this.$refs.multipleTable.selection.map(function (item) {
+          return item.serverId;
+        });
+      }
+
       listVpnServer(this.queryParams).then(response => {
         this.vpnServerList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
+
+        // ✅ 等表格渲染完成后手动设置选中
+        this.$nextTick(() => {
+          this.vpnServerList.forEach(row => {
+            if (oldSelection.includes(row.serverId)) {
+              this.$refs.multipleTable.toggleRowSelection(row, true);
+            }
+          });
+        });
       });
     },
 
@@ -633,7 +650,7 @@ export default {
     },
 
     getrowkey(row) {
-      return row.id
+      return row.serverId
     },
 
     /** 新增按钮操作 */
