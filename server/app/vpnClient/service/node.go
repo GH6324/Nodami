@@ -251,6 +251,11 @@ func (c *vpnNodeService) GetClashProxie(node *model.VpnNodeInfo, subscriptionID 
 		proxie.Alpn = []string{"h3", "hq"}
 	}
 
+	proxie.IpVersion = "ipv4-prefer"
+	if library.IsIPv6(proxie.Server) {
+		proxie.IpVersion = "ipv6"
+	}
+
 	return
 }
 

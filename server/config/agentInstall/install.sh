@@ -9,7 +9,7 @@ CONFIG_DIR="$AGENT_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/settings.yml"
 TEMP_DIR="$AGENT_DIR/temp"
 
-ZIP_NAME="agent_sing_box.zip?v1.0.3"
+ZIP_NAME="agent_sing_box.zip?v1.0.4"
 ZIP_PATH="$PWD/$ZIP_NAME"
 
 IMAGE_NAME="vlink_agent"

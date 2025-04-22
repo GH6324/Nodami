@@ -219,14 +219,15 @@
           <template>
             <template v-if="(transferList = sortedTransfers(scope.row)) && transferList.length >= 2">
               <el-col style="font-size: 12px;">
-                <el-row type="flex" align="middle">
-                  <el-row :span="24" style="text-align: left;">
+                <el-row type="flex" align="middle" style="display: flex;justify-content: center;">
+                  <el-row :span="24" style="text-align: left;" v-if="scope.row.transitProtocol || scope.row.frpProtocol">
                     中转协议:
-                    <el-tag size="mini">{{ allTransitProtocolFormat(scope.row) }}</el-tag>
+                    <el-tag size="mini" v-if="scope.row.transitProtocol ">{{ allTransitProtocolFormat(scope.row) }}</el-tag>
+                    <el-tag size="mini" v-if="scope.row.frpProtocol">{{ frpProtocolOptionsFormat(scope.row) }}</el-tag>
                   </el-row>
                 </el-row>
 
-                <div class="latency-grid">
+                <div class="latency-grid" style="display: flex;justify-content: center;">
                   <template v-for="(v, index) in transferList">
                     <div class="latency-connection">
                       <span class="node-id">服ID:{{ v.serverId }}</span>
@@ -726,11 +727,11 @@ export default {
       allTransitProtocolOptions: [
         {
           key: "hysteria2",
-          value: "端口转发"
+          value: "hy2端口转发"
         },
         {
           key: "hysteria2-out",
-          value: "协议转发"
+          value: "hy2协议转发"
         },
 
       ],
@@ -1004,6 +1005,9 @@ export default {
 
     allTransitProtocolFormat(row, column) {
       return this.selectDictLabel(this.allTransitProtocolOptions, row.transitProtocol);
+    },
+    frpProtocolOptionsFormat(row, column) {
+      return this.selectDictLabel(this.frpProtocolOptions, row.frpProtocol);
     },
 
 

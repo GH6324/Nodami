@@ -20,7 +20,7 @@ import SlideDialog from "./SlideDialog.vue";
 
 export default {
   name: 'CommandPanel',
-  components: { SlideDialog },
+  components: {SlideDialog},
   props: {
     visible: {
       type: Boolean,
@@ -31,30 +31,29 @@ export default {
       default: () => ({
         'Agent日志查看': 'clear && docker logs -f --tail 1000 vlink_agent\r',
         'Agent日志清空': `clear && for cid in $(docker ps -aq); do sudo truncate -s 0 "$(docker inspect --format='{{.LogPath}}' "$cid")"; done\r`,
-        'Agent重启':    'clear && cd && docker restart  vlink_agent && echo "重启完成"\r',
-        'Agent卸载':    'clear && cd && docker rm -f vlink_agent && rm -rf vlink_agent && rm -rf vlink_new  && rm -f agent_sing_box.zip?* && echo "卸载完成"\r',
-        '安装Docker':   'clear && curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh && sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http\r',
-        '安装Nxtrace':  'clear && curl nxtrace.org/nt | bash\r',
-        '去程 电信':     'clear && nexttrace 202.97.33.110\r',
-        '去程 联通':     'clear && nexttrace 219.158.113.106\r',
-        '去程 移动':     'clear && nexttrace 221.183.55.22\r',
-        '重启服务器':    'clear && sudo reboot\r',
+        'Agent重启':     'clear && cd && docker restart  vlink_agent && echo "重启完成"\r',
+        'Agent卸载': 'clear && cd && docker rm -f vlink_agent && rm -rf vlink_agent && rm -rf vlink_new  && rm -f agent_sing_box.zip?* && echo "卸载完成"\r',
+        '安装Docker': 'clear && curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh && sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http\r',
+        '回程测试 电信': 'clear && command -v nexttrace >/dev/null 2>&1 || curl -sSL nxtrace.org/nt | bash; nexttrace 202.97.33.110\n\r',
+        '回程测试 联通': 'clear && command -v nexttrace >/dev/null 2>&1 || curl -sSL nxtrace.org/nt | bash; nexttrace 219.158.113.106\r',
+        '回程测试 移动': 'clear && command -v nexttrace >/dev/null 2>&1 || curl -sSL nxtrace.org/nt | bash; nexttrace 221.183.55.22\r',
+        '重启服务器': 'clear && sudo reboot\r',
       })
     },
     sendCommand: {
       type: Function,
-      default: function (e){
+      default: function (e) {
 
       }
     }
   },
-  methods:{
-    sendCommandProp(e){
+  methods: {
+    sendCommandProp(e) {
       this.sendCommand('\x03')
-      setTimeout(()=>{
+      setTimeout(() => {
         this.sendCommand(e)
         this.$emit('update:visible', false);
-      },500)
+      }, 500)
 
     }
   },
@@ -77,7 +76,7 @@ export default {
   height: 100%;
   padding: 16px;
   overflow-y: auto;
-  background-color: rgb(255,255,255,0.5);
+  background-color: rgb(255, 255, 255, 0.5);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 

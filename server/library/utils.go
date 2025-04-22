@@ -657,3 +657,11 @@ func MapValuesToList[K int | string, V any](m map[K]V) []V {
 
 	return values
 }
+
+func IsIPv6(ipStr string) bool {
+	ip := net.ParseIP(strings.TrimSpace(ipStr))
+	if ip == nil {
+		return false // 无效 IP
+	}
+	return ip.To4() == nil // 只有 IPv6 返回 true
+}

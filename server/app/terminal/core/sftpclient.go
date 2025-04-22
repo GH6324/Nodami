@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"github.com/gogf/gf/frame/g"
 	"github.com/spf13/cast"
 	"io"
 	"log"
@@ -104,7 +103,10 @@ type NetworkByte struct {
 	tmestamp  time.Time
 }
 
-func (sclient *SSHClient) runCommand(command string) (string, error) {
+func (sclient *SSHClient) RunCommand(command string) (string, error) {
+	if sclient.Client == nil {
+		return "", fmt.Errorf("client is nil")
+	}
 	sshSession, err := sclient.Client.NewSession()
 	if err != nil {
 		return "", err
@@ -121,9 +123,9 @@ func (sclient *SSHClient) runCommand(command string) (string, error) {
 	return result.String(), nil
 }
 
-func (sclient *SSHClient) getBandwidth() (networkBytes []NetworkByte, err error) {
+func (sclient *SSHClient) GetBandwidth() (networkBytes []NetworkByte, err error) {
 	networkBytes = make([]NetworkByte, 0)
-	netInterfaces, err := sclient.runCommand("ls /sys/class/net/")
+	netInterfaces, err := sclient.RunCommand("ls /sys/class/net/")
 	if err != nil {
 		log.Printf("获取网卡列表失败: %v\n", err)
 		return
@@ -138,7 +140,7 @@ func (sclient *SSHClient) getBandwidth() (networkBytes []NetworkByte, err error)
 				continue
 			}
 
-			networkData, err := sclient.runCommand(fmt.Sprintf("cat /proc/net/dev | grep '%s:'", iface))
+			networkData, err := sclient.RunCommand(fmt.Sprintf("cat /proc/net/dev | grep '%s:'", iface))
 			if err != nil {
 				continue
 			}
@@ -186,42 +188,8 @@ func shouldIgnoreInterface(iface string) bool {
 	return false
 }
 
-//func (sclient *SSHClient) getBandwidth() (networkBytes []NetworkByte, err error) {
-//	networkBytes = make([]NetworkByte, 0)
-//	netInterfaces, err := sclient.runCommand("ls /sys/class/net/")
-//	if err != nil {
-//		return
-//	}
-//	interfaces := strings.Fields(netInterfaces)
-//
-//	for _, iface := range interfaces {
-//		var networkData string
-//		networkData, err = sclient.runCommand(fmt.Sprintf("cat /proc/net/dev | grep %s", iface))
-//		if err != nil {
-//			continue
-//		}
-//
-//		fields := strings.Fields(networkData)
-//
-//		if len(fields) < 17 {
-//			continue
-//		}
-//
-//		rxBytes := parseUint64(fields[1])
-//		txBytes := parseUint64(fields[9])
-//
-//		networkBytes = append(networkBytes, NetworkByte{
-//			IfaceName: iface,
-//			UpSpeed:   float64(rxBytes / 8),
-//			DomSpeed:  float64(txBytes / 8),
-//		})
-//
-//	}
-//	return
-//}
-
 func (sclient *SSHClient) GetPublicIP() string {
-	ip, err := sclient.runCommand("curl -s https://api.ipify.org")
+	ip, err := sclient.RunCommand("curl -s https://api.ipify.org")
 	if err != nil {
 		return "_"
 	}
@@ -229,7 +197,7 @@ func (sclient *SSHClient) GetPublicIP() string {
 }
 
 func (sclient *SSHClient) GetPublicIPv6() string {
-	ipv6, err := sclient.runCommand("curl -s http://6.ipw.cn/")
+	ipv6, err := sclient.RunCommand("curl -s http://6.ipw.cn/")
 	if err != nil {
 		return ""
 	}
@@ -243,10 +211,10 @@ type DiskInfo struct {
 	FreePercent float64 `json:"freePercent"`
 }
 
-func (sclient *SSHClient) getMemoryInfo() (mem *DiskInfo, swap *DiskInfo, err error) {
+func (sclient *SSHClient) GetMemoryInfo() (mem *DiskInfo, swap *DiskInfo, err error) {
 	mem = &DiskInfo{}
 	swap = &DiskInfo{}
-	memoryInfo, err := sclient.runCommand("free -h")
+	memoryInfo, err := sclient.RunCommand("free -h")
 	if err != nil {
 		return
 	}
@@ -277,9 +245,9 @@ func (sclient *SSHClient) getMemoryInfo() (mem *DiskInfo, swap *DiskInfo, err er
 	return
 }
 
-func (sclient *SSHClient) getDiskInfo() (*DiskInfo, error) {
+func (sclient *SSHClient) GetDiskInfo() (*DiskInfo, error) {
 	// 使用 df 命令获取磁盘空间信息
-	diskInfo, err := sclient.runCommand("df -B1") // -B1 用于统一使用 bytes 为单位
+	diskInfo, err := sclient.RunCommand("df -B1") // -B1 用于统一使用 bytes 为单位
 	if err != nil {
 		return nil, fmt.Errorf("获取磁盘空间信息失败: %v", err)
 	}
@@ -320,71 +288,41 @@ func (sclient *SSHClient) getDiskInfo() (*DiskInfo, error) {
 	}, nil
 }
 
-type ServerInfo struct {
-	PublicIPv4     string        `json:"publicIPv4"`     //ipv4地址
-	PublicIPv6     string        `json:"publicIPv6"`     //ipv6地址
-	NetworkBytes   []NetworkByte `json:"networkBytes"`   //实时宽带
-	TcpConnections int           `json:"tcpConnections"` //tcp连接数
-	UdpConnections int           `json:"udpConnections"` //udp连接数
-	CPUCores       int           `json:"cpuCores"`       //核心数
-	CPUUsage       float64       `json:"cpuUsage"`       //使用比例
-	Mem            *DiskInfo     `json:"mem"`
-	Swap           *DiskInfo     `json:"swap"`
-	Disk           *DiskInfo     `json:"disk"`
+func (sclient *SSHClient) GetConnections() (tcp, udp int, err error) {
+	var tcpConnections, udpConnections string
+	tcpConnections, err = sclient.RunCommand("netstat -ant | grep ESTABLISHED | wc -l")
+	if err != nil {
+		err = fmt.Errorf("获取TCP连接数失败: %v", err)
+		return
+	}
+	tcp = cast.ToInt(strings.TrimSpace(tcpConnections))
+	udpConnections, err = sclient.RunCommand("netstat -anu | wc -l")
+	if err != nil {
+		err = fmt.Errorf("获取UDP连接数失败: %v", err)
+		return
+	}
+	udp = cast.ToInt(strings.TrimSpace(udpConnections))
+	return
 }
 
-func (sclient *SSHClient) GetServerInfo() (serverInfo *ServerInfo, err error) {
-
-	serverInfo = &ServerInfo{}
-	serverInfo.NetworkBytes, err = sclient.getBandwidth()
-	if err != nil {
-		g.Log().Errorf("获取实时宽带失败 %s", err)
-	}
-	_, err = sclient.runCommand("which netstat || (apt-get update -y && apt-get install -y net-tools) || (yum install -y net-tools)")
-	if err != nil {
-		g.Log().Errorf("netstat安装失败 %s", err)
-	}
-
-	var tcpConnections, udpConnections string
-	tcpConnections, err = sclient.runCommand("netstat -ant | grep ESTABLISHED | wc -l")
-	if err != nil {
-		g.Log().Errorf("获取TCP连接数失败: %v\n", err)
-	} else {
-		serverInfo.TcpConnections = cast.ToInt(strings.TrimSpace(tcpConnections))
-	}
-
-	udpConnections, err = sclient.runCommand("netstat -anu | wc -l")
-	if err != nil {
-		g.Log().Errorf("获取UDP连接数失败: %v\n", err)
-	} else {
-		serverInfo.UdpConnections = cast.ToInt(strings.TrimSpace(udpConnections))
-	}
-
+func (sclient *SSHClient) GetCPUCores() (cpuCores int, err error) {
 	// 获取 CPU 核心数
-	cpuCores, err := sclient.runCommand("nproc")
+	cores, err := sclient.RunCommand("nproc")
 	if err != nil {
-		g.Log().Errorf("获取CPU核心数失败: %v\n", err)
-	} else {
-		serverInfo.CPUCores = cast.ToInt(strings.TrimSpace(cpuCores))
+		err = fmt.Errorf("获取CPU核心数失败: %v", err)
+		return
 	}
+	cpuCores = cast.ToInt(strings.TrimSpace(cores))
+	return
+}
 
-	// 获取 CPU 占用情况
-	cpuUsage, err := sclient.runCommand("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'")
+func (sclient *SSHClient) GetCPUUsage() (usage float64, err error) {
+	// 获取 CPU 核心数
+	cpuUsage, err := sclient.RunCommand("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'")
 	if err != nil {
-		g.Log().Errorf("获取CPU占用情况失败: %v\n", err)
-	} else {
-		serverInfo.CPUUsage = cast.ToFloat64(strings.TrimSpace(cpuUsage))
+		err = fmt.Errorf("获取CPU占用情况失败: %v", err)
+		return
 	}
-
-	serverInfo.Mem, serverInfo.Swap, err = sclient.getMemoryInfo()
-	if err != nil {
-		g.Log().Errorf("获取内存信息失败: %v\n", err)
-	}
-
-	// 获取硬盘占用情况
-	serverInfo.Disk, err = sclient.getDiskInfo()
-	if err != nil {
-		g.Log().Errorf("获取硬盘占用情况失败: %v\n", err)
-	}
+	usage = cast.ToFloat64(strings.TrimSpace(cpuUsage))
 	return
 }

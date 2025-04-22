@@ -218,8 +218,8 @@ export default {
         pingId: undefined,
         serverId: undefined,
         nationName: undefined,
-        pingUrl: "http://127.0.0.1:2061/generate_204",
-        speedUrl: "http://127.0.0.1:2061/speed_test?byte=5024000",
+        pingUrl: "http://localhost:2061/generate_204",
+        speedUrl: "http://localhost:2061/speed_test?byte=5024000",
         grpcPort: undefined,
       };
       this.resetForm("form");

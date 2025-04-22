@@ -273,16 +273,36 @@ export default {
           if (firstChar === '{' || firstChar === '[') {
             try {
               const info = JSON.parse(data);
+              if (info["common"]){
+                this.serverInfo.publicIPv4 = info["common"].publicIPv4
+                this.serverInfo.publicIPv6 = info["common"].publicIPv6
+                this.serverInfo.cpuCores = info["common"].cpuCores
+              }
+              if (info["networkBytes"]){
+                this.serverInfo.networkBytes = info["networkBytes"]
+                this.$nextTick(() => {
+                  if (this.activeNetwork === undefined && info.networkBytes) {
+                    this.activeNetwork = 0;
+                  }
+                });
+              }
 
-              // --- 赋值并处理 ---
-              this.serverInfo = info;
+              if (info["connections"]){
+                this.serverInfo.tcpConnections = info["connections"].tcpConnections
+                this.serverInfo.udpConnections = info["connections"].udpConnections
+              }
 
-              this.$nextTick(() => {
-                if (this.activeNetwork === undefined && info.networkBytes) {
-                  this.activeNetwork = 0;
-                }
-              });
-              return;                         // ✅ 解析成功，直接返回
+              if (info["usage"]){
+                this.serverInfo.cpuUsage = info["usage"]
+              }
+
+              if (info["memory"]){
+                this.serverInfo.mem = info["memory"].mem
+                this.serverInfo.swap = info["memory"].swap
+              }
+              if (info["disk"]){
+                this.serverInfo.disk = info["disk"]
+              }
             } catch (e) {
               // 解析失败 fall through，继续走到“非 JSON”分支
               console.warn('WS JSON 解析失败：', e, data);

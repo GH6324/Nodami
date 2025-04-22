@@ -279,6 +279,7 @@ type Proxie struct {
 	SendThrough          string `yaml:"send-through,omitempty" json:"send-through,omitempty"`
 	ClientFingerprint    string `yaml:"client-fingerprint,omitempty" json:"client-fingerprint,omitempty"`
 	CongestionController string `yaml:"congestion-controller,omitempty" json:"congestion-controller,omitempty"`
+	IpVersion            string `yaml:"ip-version,omitempty" json:"ip-version,omitempty"`
 }
 type GrpcOpts struct {
 	GrpcServiceName string `yaml:"grpc-service-name,omitempty" json:"grpc-service-name,omitempty"`

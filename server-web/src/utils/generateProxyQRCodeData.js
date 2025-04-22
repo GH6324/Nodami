@@ -31,15 +31,21 @@ function dig(obj /*, k1, k2, … */) {
   return res;
 }
 
+function wrapIPv6(host) {
+  if (typeof host !== 'string') return host;
+  return host.includes(':') && !host.startsWith('[') ? `[${host}]` : host;
+}
+
 /*─────────────────────────────────────────────────────────────────────────────*
  *  Main Converter
  *────────────────────────────────────────────────────────────────────────────*/
 export function  generateProxyQRCodeData(proxy) {
+  console.log(proxy)
   if (!proxy || typeof proxy !== 'object') throw new Error('proxy must be an object');
 
   var type   = String(pick(proxy, 'type') || '').toLowerCase();
   var name   = encodeURIComponent(pick(proxy, 'name') || 'node');
-  var server = pick(proxy, 'server');
+  var server = wrapIPv6(pick(proxy, 'server'));
   var port   = pick(proxy, 'port');
 
   var net  = String(pick(proxy, 'network') || '').toLowerCase();

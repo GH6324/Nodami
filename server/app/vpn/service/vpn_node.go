@@ -136,10 +136,11 @@ func (s *vpnNode) GetInfoById(ctx context.Context, nodeId int) (info *model.VpnN
 	fields = append(fields, dao.VpnNode.Fields(true, true)...)
 	fields = append(fields, dao.VpnServer.Fields(true, false, dao.VpnNode.Fields(false, false)...)...)
 	fields = append(fields, dao.VpnNodeNation.Fields(true, false, dao.VpnNode.Fields(false, false)...)...)
-
+	fields = append(fields, fmt.Sprintf("%s.%s as frpServerIp", "frpServer", dao.VpnServer.Columns.ServerIp))
 	err = dao.VpnNode.Ctx(ctx).
 		LeftJoin(dao.VpnNodeNation.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnNodeNation.Table, dao.VpnNodeNation.Columns.NationId, dao.VpnNode.Table, dao.VpnNode.Columns.NationId)).
 		LeftJoin(dao.VpnServer.Table, fmt.Sprintf("%s.%s=%s.%s", dao.VpnServer.Table, dao.VpnServer.Columns.ServerId, dao.VpnNode.Table, dao.VpnNode.Columns.ServerId)).
+		LeftJoin(fmt.Sprintf("%s as frpServer", dao.VpnServer.Table), fmt.Sprintf("frpServer.%s=%s.%s", dao.VpnServer.Columns.ServerId, dao.VpnNode.Table, dao.VpnNode.Columns.FrpServerId)).
 		Where(dao.VpnNode.Table+"."+dao.VpnNode.Columns.NodeId, nodeId).
 		Fields(fields).
 		Scan(&info)
