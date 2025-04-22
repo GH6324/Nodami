@@ -337,12 +337,30 @@ func (sclient *SSHClient) GetCPUCores() (cpuCores int, err error) {
 }
 
 func (sclient *SSHClient) GetCPUUsage() (usage float64, err error) {
-	// 获取 CPU 核心数
-	cpuUsage, err := sclient.RunCommand("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'")
+	_, err = sclient.RunCommand("command -v mpstat >/dev/null 2>&1")
 	if err != nil {
-		err = fmt.Errorf("获取CPU占用情况失败: %v", err)
-		return
+		output, r := sclient.RunCommand(`sh -c 'if command -v apt-get >/dev/null 2>&1; then \
+	sudo apt-get install -y sysstat; \
+	elif command -v yum >/dev/null 2>&1; then \
+	sudo yum install -y sysstat; \
+	elif command -v dnf >/dev/null 2>&1; then \
+	sudo dnf install -y sysstat; \
+	else \
+	echo \"未识别的操作系统，请手动安装 sysstat\"; \
+	exit 1; \
+	fi'`)
+		if r != nil {
+			err = fmt.Errorf("安装 sysstat 失败: %v, 输出: %s", err, output)
+			return
+		}
+
 	}
-	usage = cast.ToFloat64(strings.TrimSpace(cpuUsage))
+
+	vmstatUsage, err := sclient.RunCommand("mpstat 1 1 | awk '/Average:/ {print 100 - $NF}'")
+	if err != nil {
+		return 0, fmt.Errorf("获取 CPU 占用情况失败: %v", err)
+	}
+
+	usage = cast.ToFloat64(strings.TrimSpace(vmstatUsage))
 	return
 }
