@@ -32,7 +32,7 @@
     <!-- 第二行：网络流量 -->
     <div class="section compact-section">
       <div class="section-header">
-        <span class="title"><i class="el-icon-data-line"></i> 网络流量</span>
+        <div><span class="title"><i class="el-icon-data-line"></i> 网络流量</span></div>
         <el-select
           v-model="activeNetwork"
           size="mini"
@@ -68,7 +68,7 @@
     <!-- 第三行：资源监控 -->
     <div class="section compact-section">
       <div class="section-header">
-        <span class="title"><i class="el-icon-odometer"></i> 资源状态</span>
+        <div><span class="title"><i class="el-icon-odometer"></i> 资源状态</span></div>
       </div>
       <el-row :gutter="8" class="resource-row">
         <!-- CPU -->
