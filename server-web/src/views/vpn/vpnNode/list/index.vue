@@ -1143,7 +1143,6 @@ export default {
         streamSettingsPath: "/index",
         streamSettingsHost: "www.cloudflare.com",
         magnification: 1,
-        domainId: undefined,
         method: undefined,
         frpServerId: undefined,
         frpProtocol: undefined,
