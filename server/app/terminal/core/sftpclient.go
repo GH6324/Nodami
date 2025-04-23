@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -103,7 +104,11 @@ type NetworkByte struct {
 	tmestamp  time.Time
 }
 
+var mu sync.Mutex
+
 func (sclient *SSHClient) RunCommand(command string) (string, error) {
+	mu.Lock()
+	defer mu.Unlock()
 	if sclient.Client == nil {
 		return "", fmt.Errorf("client is nil")
 	}
@@ -337,30 +342,53 @@ func (sclient *SSHClient) GetCPUCores() (cpuCores int, err error) {
 }
 
 func (sclient *SSHClient) GetCPUUsage() (usage float64, err error) {
-	_, err = sclient.RunCommand("command -v mpstat >/dev/null 2>&1")
+	// 获取当前的 CPU 使用情况
+	lastCpuInfo, err := sclient.RunCommand("cat /proc/stat | grep -w cpu | awk '{print $2,$3,$4,$5,$6,$7,$8,$9}'")
 	if err != nil {
-		output, r := sclient.RunCommand(`sh -c 'if command -v apt-get >/dev/null 2>&1; then \
-	sudo apt-get install -y sysstat; \
-	elif command -v yum >/dev/null 2>&1; then \
-	sudo yum install -y sysstat; \
-	elif command -v dnf >/dev/null 2>&1; then \
-	sudo dnf install -y sysstat; \
-	else \
-	echo \"未识别的操作系统，请手动安装 sysstat\"; \
-	exit 1; \
-	fi'`)
-		if r != nil {
-			err = fmt.Errorf("安装 sysstat 失败: %v, 输出: %s", err, output)
-			return
-		}
-
+		return 0, fmt.Errorf("无法获取 CPU 信息: %v", err)
 	}
 
-	vmstatUsage, err := sclient.RunCommand("mpstat 1 1 | awk '/Average:/ {print 100 - $NF}'")
-	if err != nil {
-		return 0, fmt.Errorf("获取 CPU 占用情况失败: %v", err)
+	// 提取当前的 CPU 时间信息
+	lastCpuFields := strings.Fields(lastCpuInfo)
+	if len(lastCpuFields) < 8 {
+		return 0, fmt.Errorf("获取的 CPU 信息格式不正确，期望 8 个字段，实际得到 %d 个", len(lastCpuFields))
 	}
 
-	usage = cast.ToFloat64(strings.TrimSpace(vmstatUsage))
-	return
+	// 提取空闲时间和总时间
+	lastSysIdle := cast.ToUint64(lastCpuFields[3])
+	lastTotalCpuTime := cast.ToUint64(lastCpuFields[0]) + cast.ToUint64(lastCpuFields[1]) +
+		cast.ToUint64(lastCpuFields[2]) + cast.ToUint64(lastCpuFields[3]) +
+		cast.ToUint64(lastCpuFields[4]) + cast.ToUint64(lastCpuFields[5]) +
+		cast.ToUint64(lastCpuFields[6]) + cast.ToUint64(lastCpuFields[7])
+
+	// 暂停并等待一段时间（与脚本中的 sleep 相同）
+	time.Sleep(5 * time.Second)
+
+	// 获取下一次的 CPU 时间信息
+	nextCpuInfo, err := sclient.RunCommand("cat /proc/stat | grep -w cpu | awk '{print $2,$3,$4,$5,$6,$7,$8,$9}'")
+	if err != nil {
+		return 0, fmt.Errorf("无法获取下一次 CPU 信息: %v", err)
+	}
+
+	// 提取下一次的 CPU 时间信息
+	nextCpuFields := strings.Fields(nextCpuInfo)
+	if len(nextCpuFields) < 8 {
+		return 0, fmt.Errorf("获取的 CPU 信息格式不正确，期望 8 个字段，实际得到 %d 个", len(nextCpuFields))
+	}
+
+	// 提取空闲时间和总时间
+	nextSysIdle := cast.ToUint64(nextCpuFields[3])
+	nextTotalCpuTime := cast.ToUint64(nextCpuFields[0]) + cast.ToUint64(nextCpuFields[1]) +
+		cast.ToUint64(nextCpuFields[2]) + cast.ToUint64(nextCpuFields[3]) +
+		cast.ToUint64(nextCpuFields[4]) + cast.ToUint64(nextCpuFields[5]) +
+		cast.ToUint64(nextCpuFields[6]) + cast.ToUint64(nextCpuFields[7])
+
+	// 计算空闲时间和总时间的差值
+	systemIdle := float64(nextSysIdle - lastSysIdle)
+	totalTime := float64(nextTotalCpuTime - lastTotalCpuTime)
+
+	// 计算 CPU 使用率
+	usage = 100 - (systemIdle / totalTime * 100)
+
+	return cast.ToFloat64(fmt.Sprintf("%.2f", usage)), nil
 }

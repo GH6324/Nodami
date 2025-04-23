@@ -19,7 +19,7 @@
                 <div class="enhanced-dashboard">
 
                   <!-- 节点延迟模块 -->
-                  <el-card class="elegant-card latency-panel" shadow="never">
+                  <el-card class="elegant-card latency-panel" shadow="never" v-if="serverPingList.length>0">
                     <div class="panel-header">
                       <div class="title-group">
                         <i class="el-icon-cpu header-icon"></i>
@@ -54,7 +54,7 @@
 
                   <!-- 全球测试模块 -->
                   <el-card class="elegant-card global-panel " shadow="never" style="position: relative">
-                    <div class="tabs-with-refresh">
+                    <div class="tabs-with-refresh" >
                       <el-tabs v-model="activeTestType" class="modern-tabs">
                         <el-tab-pane name="ping">
                           <template #label>
@@ -63,12 +63,12 @@
                             节点延迟
                           </span>
                           </template>
-                          <div class="metric-grid">
+                          <div class="metric-grid" :style="{'max-height': serverPingList && serverPingList.length>0?'210px':'370px'}">
                             <div v-for="(v,i) in vpnNodePingTests" :key="'p'+i" class="metric-card" :class="getLatencyType(v.ping)">
                               <div class="metric-header">
                                 <span class="nation-name">{{ v.nationName }}</span>
                                 <div class="metric">
-                                  <span class="metric-value">
+                                  <span class="metric-value" @click="pingTest(v)">
                                     <i v-if="v.pinging" class="el-icon-loading" style="margin-right: 4px;"></i>
                                     {{ formatLatency(v.ping) }}
                                   </span>
@@ -86,12 +86,12 @@
                             节点测速
                           </span>
                           </template>
-                          <div class="metric-grid">
+                          <div class="metric-grid" :style="{'max-height': serverPingList && serverPingList.length>0?'210px':'370px'}">
                             <div v-for="(v,i) in vpnNodeSpeedTests" :key="'s'+i" class="metric-card" :class="getSpeedType(v.speed)">
                               <div class="metric-header">
                                 <span class="nation-name">{{ v.nationName }}</span>
                                 <div class="metric">
-                                  <span class="metric-value">
+                                  <span class="metric-value" @click="speedTest(v)">
                                     <i v-if="v.speeding" class="el-icon-loading" style="margin-right: 4px;"></i>
                                     {{ formatSpeed(v.speed) }}
                                   </span>
@@ -158,7 +158,6 @@ export default {
       serverLabel: this.nodeInfo.serverId,
       activeNetwork: undefined,
       globalTesting: false,
-      ws: undefined,
       serverInfo: {
         publicIPv4: undefined,
         publicIPv6: undefined,
@@ -201,12 +200,11 @@ export default {
   },
   mounted() {
     this.sortedServerLabelList()
-    this.initWebSocket()
     this.setServerPinging()
     this.listVpnNodePing()
   },
   beforeDestroy() {
-    this.close()
+
   },
   methods: {
     sortedServerLabelList() {
@@ -277,53 +275,47 @@ export default {
       }
       console.log(this.serverPingList)
     },
-    close() {
-      if (this.ws !== null) {
-        this.ws.close()
-      }
+    pingTest(item){
+      item.pinging = true;
+      item.ping = 0;
+      return pingTest(this.nodeInfo.nodeId, item.pingId)
+        .then(ret => {
+          item.ping = ret.data;
+        })
+        .catch(() => {
+          item.ping = -1;
+        })
+        .finally(() => {
+          item.pinging = false;
+        });
     },
-    initWebSocket() {
-      if (this.ws) {
-        this.ws.close();
-        this.ws = null
-      }
-      return
+    speedTest(item){
+      item.speeding = true;
+      item.speed = 0;
+      return speedTest(this.nodeInfo.nodeId, item.speedId)
+        .then(ret => {
+          item.speed = ret.data * 1000;
+        })
+        .catch(() => {
+          item.speed = -1;
+        })
+        .finally(() => {
+          item.speeding = false;
+        });
     },
     async refreshGlobalTest(all = false) {
       console.log("refreshGlobalTest")
       this.globalTesting = true;
       if (this.activeTestType === 'ping' || all) {
         const promises = this.vpnNodePingTests.map((item, index) => {
-          item.pinging = true;
-          item.ping = 0;
-          return pingTest(this.nodeInfo.nodeId, item.pingId)
-            .then(ret => {
-              item.ping = ret.data;
-            })
-            .catch(() => {
-              item.ping = -1;
-            })
-            .finally(() => {
-              item.pinging = false;
-            });
+          return this.pingTest(item)
         });
         await Promise.all(promises);
       }
 
       if (this.activeTestType === 'speed' || all) {
         const promises = this.vpnNodeSpeedTests.map((item, index) => {
-          item.speeding = true;
-          item.speed = 0;
-          return speedTest(this.nodeInfo.nodeId, item.speedId)
-            .then(ret => {
-              item.speed = ret.data * 1000;
-            })
-            .catch(() => {
-              item.speed = -1;
-            })
-            .finally(() => {
-              item.speeding = false;
-            });
+          return this.speedTest(item)
         });
         await Promise.all(promises);
       }
@@ -521,9 +513,8 @@ export default {
   }
 
   .metric-grid {
-    flex: 1;
-    max-height: 200px;
     overflow-y: auto;
+    flex: 1;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
