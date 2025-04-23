@@ -164,8 +164,8 @@ func (sclient *SSHClient) GetBandwidth() (networkBytes []NetworkByte, err error)
 				duration := time.Now().Sub(lastStat.tmestamp).Seconds()
 				networkBytes = append(networkBytes, NetworkByte{
 					IfaceName: iface,
-					UpSpeed:   (float64(upSpeed) - lastStat.UpSpeed) / float64(duration),
-					DomSpeed:  (float64(domSpeed) - lastStat.DomSpeed) / float64(duration),
+					UpSpeed:   (float64(upSpeed) - lastStat.UpSpeed) / float64(duration) * 8,
+					DomSpeed:  (float64(domSpeed) - lastStat.DomSpeed) / float64(duration) * 8,
 				})
 			} else {
 				lastStats[iface] = NetworkByte{
