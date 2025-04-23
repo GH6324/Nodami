@@ -181,7 +181,7 @@ check_for_update() {
             echo_content white "已取消更新操作。"
         fi
     else
-        update_nodami_this
+        update_nodami_this "$latest_version"
     fi
 }
 
@@ -189,7 +189,8 @@ check_for_update() {
 update_nodami_this() {
    echo_content yellow "正在更新 Nodami 到当前版本最新代码"
    cd "$REPO_DIR" || exit
-   git pull
+   git fetch --tags
+   git checkout "tags/$1" -B "$1"
    cd "$REPO_DIR/docker/bao" || exit
    echo_content skyBlue "更新完成 Nodami 重新启动..."
    docker compose down

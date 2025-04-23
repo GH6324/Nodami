@@ -1179,7 +1179,7 @@ export default {
       this.getVpnNodeNationItems()
       this.reset();
       this.open = true;
-      this.title = "新增节点";
+      this.title = "新增：";
     },
 
 
