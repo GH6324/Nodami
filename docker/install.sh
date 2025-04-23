@@ -206,6 +206,7 @@ update_nodami() {
     git checkout "tags/$1" -B "$1"
     cd "$REPO_DIR/docker/bao" || exit
     echo_content skyBlue "更新完成 Nodami 重新启动..."
+    echo "$latest_version" > "$VERSION_CACHE_FILE"
     docker compose down
     docker compose up -d
     echo_content skyBlue "等待 Nodami 启动..."
