@@ -189,8 +189,8 @@ check_for_update() {
 update_nodami_this() {
    echo_content yellow "正在更新 Nodami 到当前版本最新代码"
    cd "$REPO_DIR" || exit
-   git reset --hard "refs/tags/$1"
    git fetch --tags
+   git reset --hard "refs/tags/$1"
    cd "$REPO_DIR/docker/bao" || exit
    echo_content skyBlue "更新完成 Nodami 重新启动..."
    docker compose down
