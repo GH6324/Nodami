@@ -480,7 +480,13 @@ func (x *Server) run() {
 		isSudo = "sudo"
 	}
 
-	dnsCmd := fmt.Sprintf(`%s bash -c 'echo -e "nameserver 114.114.114.114\nnameserver 8.8.8.8" > /etc/resolv.conf'`, isSudo)
+	dnsCmd := fmt.Sprintf(`%s bash -c 'cat <<EOF > /etc/resolv.conf
+nameserver 2001:4860:4860::8888
+nameserver 2620:119:35::35
+nameserver 114.114.114.114
+nameserver 8.8.8.8
+EOF'`, isSudo)
+
 	curlInstallCmd := fmt.Sprintf(`command -v curl >/dev/null 2>&1 || {
     if [ -f /etc/centos-release ]; then
         %s yum install -y curl;

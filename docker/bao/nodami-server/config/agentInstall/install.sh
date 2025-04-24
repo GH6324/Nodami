@@ -63,20 +63,7 @@ install_pkgs() {
   done
 }
 
-### ========= DNS ========= ###
-set_dns() {
-  need_root
-  [[ ${#DNS_ARRAY[@]} -eq 0 || "${DNS_ARRAY[0]}" == "{{dnsServers}}" ]] && return
-  cecho white "旧 DNS:"
-  cat /etc/resolv.conf
-  cp /etc/resolv.conf{,.backup}
 
-  : > /etc/resolv.conf
-  for d in "${DNS_ARRAY[@]}"; do echo "nameserver $d" >> /etc/resolv.conf; done
-
-  cecho green "新 DNS:"
-  cat /etc/resolv.conf
-}
 
 ### ========= 中国网络判定 ========= ###
 is_in_china() {
@@ -344,7 +331,6 @@ main() {
   fi
 
   # ------------ 全量安装 ------------
-  set_dns
   install_pkgs
   is_in_china && apply_mirrors_once
   enable_bbr

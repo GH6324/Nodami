@@ -225,7 +225,7 @@ func (sclient *SSHClient) GetPublicIPv6() string {
 	}
 
 	for _, url := range ipv6Sources {
-		out, err := sclient.RunCommand(fmt.Sprintf("curl -g -6 -s %s", url))
+		out, err := sclient.RunCommand(fmt.Sprintf("curl -g -6 --dns-servers 2001:4860:4860::8888 -s  %s", url))
 		if err != nil {
 			continue
 		}
