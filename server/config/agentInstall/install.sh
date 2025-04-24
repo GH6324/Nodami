@@ -242,10 +242,21 @@ install_with_aliyun_mirror() {
     fi
 }
 
+install_ipv6_mirror() {
+    cecho skyBlue "curl -6 -fsSL https://get.docker.com | sh"
+    curl -6 -fsSL https://get.docker.com | sh
+    if docker -v &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
 
 install_docker() {
       # 尝试多个安装方式
-      if ! install_with_huawei_mirror && ! install_with_huawei_mirror2 && ! install_with_get_docker && ! install_with_aliyun_mirror; then
+      if ! install_with_huawei_mirror && ! install_with_huawei_mirror2 && ! install_with_get_docker && ! install_with_aliyun_mirror && ! install_ipv6_mirror; then
           # 如果所有方法都失败，则退出脚本
           cecho red "Docker 安装失败，脚本终止！请尝试手动安装docker"
           exit 1
