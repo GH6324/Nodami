@@ -18,7 +18,7 @@ import (
 func main() {
 
 	go func() {
-		log.Println(http.ListenAndServe("0.0.0.0:26060", nil))
+		log.Println(http.ListenAndServe(":26060", nil))
 	}()
 	go func() {
 		g.Log().Info("InitAgentClient")

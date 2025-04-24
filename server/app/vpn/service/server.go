@@ -79,7 +79,7 @@ func GetServer(serverId int, new bool) (*Server, bool) {
 		}
 
 		s.SSHAddr = fmt.Sprintf("%s:%d", strings.TrimSpace(s.Host), s.Port)
-		if library.IsIPv6(s.SSHAddr) {
+		if library.IsIPv6(s.Host) {
 			s.SSHAddr = fmt.Sprintf("[%s]:%d", strings.TrimSpace(s.Host), s.Port)
 		}
 		SSHServer.sessions[serverId] = s
