@@ -80,8 +80,13 @@ func GetServer(serverId int, new bool) (*Server, bool) {
 
 		s.SSHAddr = fmt.Sprintf("%s:%d", strings.TrimSpace(s.Host), s.Port)
 		if library.IsIPv6(s.Host) {
-			s.SSHAddr = fmt.Sprintf("[%s]:%d", strings.TrimSpace(s.Host), s.Port)
+			ip := strings.TrimSpace(s.Host)
+			if !(strings.HasPrefix(ip, "[") && strings.HasSuffix(ip, "]")) {
+				ip = fmt.Sprintf("[%s]", ip)
+			}
+			s.SSHAddr = fmt.Sprintf("%s:%d", ip, s.Port)
 		}
+
 		SSHServer.sessions[serverId] = s
 	}
 
@@ -485,7 +490,7 @@ func (x *Server) run() {
         echo "Unsupported OS. Please install curl manually." && exit 1;
     fi;
     }`, isSudo, isSudo, isSudo)
-	agentDomCmd := fmt.Sprintf(`curl -o start.sh %s/agent/install/agent/%d?%d`, library.GetAgentAPI(), x.Id, time.Now().Unix())
+	agentDomCmd := fmt.Sprintf(`curl -o start.sh %s/agent/install/agent/%d?%d`, library.GetAgentAPI(library.IsIPv6(x.Host)), x.Id, time.Now().Unix())
 
 	cmdString := fmt.Sprintf(`%s && %s && %s && %s chmod +x start.sh && %s ./start.sh`, dnsCmd, curlInstallCmd, agentDomCmd, isSudo, isSudo)
 

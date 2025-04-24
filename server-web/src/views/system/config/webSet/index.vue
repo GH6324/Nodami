@@ -4,8 +4,11 @@
     <el-card class="box-card">
       <el-tabs tab-position="left" style="height: 100%;">
         <el-form :model="ruleForm" :rules="rules" ref="agentForm" label-width="100px">
-          <el-form-item label="服务器IP:" prop="agent.agentMqttAddres">
-            <el-input v-model="ruleForm.agent.serverIp" style="width:250px"></el-input>
+          <el-form-item label="服务器IPV4:" prop="agent.serverIpV4">
+            <el-input v-model="ruleForm.agent.serverIpV4" style="width:250px"></el-input>
+          </el-form-item>
+          <el-form-item label="服务器IPV6:" prop="agent.serverIpV6">
+            <el-input v-model="ruleForm.agent.serverIpV6" style="width:250px"></el-input>
           </el-form-item>
           <el-form-item label="通用秘钥:" prop="agent.commonUUID">
             <el-input
@@ -55,7 +58,10 @@ export default {
       },
       // 表单验证
       rules: {
-        "agent.serverIp": [
+        "agent.serverIpV4": [
+          {required: true, message: "请配置服务器IP", trigger: "blur"},
+        ],
+        "agent.serverIpV6": [
           {required: true, message: "请配置服务器IP", trigger: "blur"},
         ],
         "agent.commonUUID": [

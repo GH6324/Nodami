@@ -659,9 +659,13 @@ func MapValuesToList[K int | string, V any](m map[K]V) []V {
 }
 
 func IsIPv6(ipStr string) bool {
-	ip := net.ParseIP(strings.TrimSpace(ipStr))
+	ipStr = strings.TrimSpace(ipStr)
+	if strings.HasPrefix(ipStr, "[") && strings.HasSuffix(ipStr, "]") {
+		ipStr = ipStr[1 : len(ipStr)-1]
+	}
+	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return false // 无效 IP
 	}
-	return ip.To4() == nil // 只有 IPv6 返回 true
+	return ip.To4() == nil // IPv4 返回非 nil，IPv6 返回 nil
 }

@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/curve25519"
 	"io"
 	"math/rand"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -30,42 +31,71 @@ type Peality struct {
 
 type SettingsAgent struct {
 	CommonUUID string `json:"commonUUID"`
-	ServerIp   string `json:"serverIp"`
+	ServerIpV4 string `json:"serverIpV4"`
+	ServerIpV6 string `json:"serverIpV6"`
 }
 
 var Settings = new(settings)
 
-func getPublicIP() (string, error) {
+func GetPublicIPv4() (string, error) {
 	services := []string{
+		"https://ipv4.ident.me",
 		"https://api.ipify.org",
 		"https://ipinfo.io/ip",
 		"https://ifconfig.me",
 		"https://checkip.amazonaws.com",
 	}
 
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
+	client := http.Client{Timeout: 5 * time.Second}
 
 	for _, url := range services {
 		resp, err := client.Get(url)
 		if err != nil {
 			continue
 		}
-		defer resp.Body.Close()
-
 		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			continue
 		}
 
 		ip := strings.TrimSpace(string(body))
-		if ip != "" {
+		parsed := net.ParseIP(ip)
+		if parsed != nil && parsed.To4() != nil {
 			return ip, nil
 		}
 	}
 
-	return "", errors.New("failed to get public IP from all services")
+	return "", errors.New("failed to retrieve public IPv4")
+}
+func GetPublicIPv6() (string, error) {
+	services := []string{
+		"https://ipv6.ident.me",
+		"https://api64.ipify.org",
+		"https://ifconfig.me", // 会根据客户端优先级返回 IPv6
+	}
+
+	client := http.Client{Timeout: 5 * time.Second}
+
+	for _, url := range services {
+		resp, err := client.Get(url)
+		if err != nil {
+			continue
+		}
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			continue
+		}
+
+		ip := strings.TrimSpace(string(body))
+		parsed := net.ParseIP(ip)
+		if parsed != nil && parsed.To4() == nil {
+			return fmt.Sprintf("[%s]", ip), nil
+		}
+	}
+
+	return "", errors.New("failed to retrieve public IPv6")
 }
 
 func generateShortIDs(count int) []string {
@@ -124,8 +154,14 @@ func SetSettings(jsonData []byte) error {
 		return err
 	}
 
-	if Settings.Agent.ServerIp == "" {
-		Settings.Agent.ServerIp, err = getPublicIP()
+	if strings.TrimSpace(Settings.Agent.ServerIpV4) == "" {
+		Settings.Agent.ServerIpV4, err = GetPublicIPv4()
+		if err != nil {
+			g.Log().Errorf(err.Error())
+		}
+	}
+	if strings.TrimSpace(Settings.Agent.ServerIpV6) == "" {
+		Settings.Agent.ServerIpV6, err = GetPublicIPv6()
 		if err != nil {
 			g.Log().Errorf(err.Error())
 		}
@@ -153,19 +189,23 @@ func SetSettings(jsonData []byte) error {
 
 }
 
-func GetAgentAPI() string {
+func GetAgentAPI(isIpv6 bool) string {
 	if g.Cfg().GetString("debug.ip") != "" {
 		return fmt.Sprintf("http://%s:%d", g.Cfg().GetString("debug.ip"), g.Cfg().GetInt("debug.api"))
 	}
+	if isIpv6 {
+		return fmt.Sprintf("http://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV6), 18080)
+	}
+	return fmt.Sprintf("http://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV4), 18080)
 
-	return fmt.Sprintf("http://%s:%d", Settings.Agent.ServerIp, 18080)
-	//return fmt.Sprintf("http://%s:%d", "13.200.154.248", 18200)
 }
 
-func GetAgentMqtt() string {
+func GetAgentMqtt(isIpv6 bool) string {
 	if g.Cfg().GetString("debug.ip") != "" {
 		return fmt.Sprintf("tcp://%s:%d", g.Cfg().GetString("debug.ip"), g.Cfg().GetInt("debug.mqtt"))
 	}
-	return fmt.Sprintf("tcp://%s:%d", Settings.Agent.ServerIp, 1883)
-	//return fmt.Sprintf("tcp://%s:%d", "13.200.154.248", 11190)
+	if isIpv6 {
+		return fmt.Sprintf("tcp://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV6), 1883)
+	}
+	return fmt.Sprintf("tcp://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV4), 1883)
 }
