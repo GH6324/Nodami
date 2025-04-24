@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"net"
 	"os"
 	"strings"
 	"sync"
@@ -194,19 +195,46 @@ func shouldIgnoreInterface(iface string) bool {
 }
 
 func (sclient *SSHClient) GetPublicIP() string {
-	ip, err := sclient.RunCommand("curl -s http://4.ipw.cn/")
-	if err != nil {
-		return ""
+	ipSources := []string{
+		"https://api.ipify.org",
+		"https://ipinfo.io/ip",
+		"https://checkip.amazonaws.com",
+		"http://4.ipw.cn/", // 可保留作为兜底
 	}
-	return strings.TrimSpace(ip)
+
+	for _, url := range ipSources {
+		cmd := fmt.Sprintf("curl -s %s", url)
+		ip, err := sclient.RunCommand(cmd)
+		if err != nil {
+			continue
+		}
+		ip = strings.TrimSpace(ip)
+		if net.ParseIP(ip) != nil && net.ParseIP(ip).To4() != nil {
+			return ip
+		}
+	}
+
+	return ""
 }
 
 func (sclient *SSHClient) GetPublicIPv6() string {
-	ipv6, err := sclient.RunCommand("curl -s http://6.ipw.cn/")
-	if err != nil {
-		return ""
+	ipv6Sources := []string{
+		"https://api64.ipify.org",
+		"https://ipv6.ident.me",
+		"https://ifconfig.co/ip",
 	}
-	return strings.TrimSpace(ipv6)
+
+	for _, url := range ipv6Sources {
+		out, err := sclient.RunCommand(fmt.Sprintf("curl -g -6 -s %s", url))
+		if err != nil {
+			continue
+		}
+		ip := strings.TrimSpace(out)
+		if ip != "" {
+			return ip
+		}
+	}
+	return ""
 }
 
 type DiskInfo struct {
