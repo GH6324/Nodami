@@ -65,17 +65,7 @@ install_pkgs() {
 
 
 
-### ========= 中国网络判定 ========= ###
-is_in_china() {
-  curl -fsSL https://ipinfo.io/country 2>/dev/null | grep -q '^CN' && return 0
-  curl -m5 -s https://www.google.com &>/dev/null && return 1 || return 0
-}
 
-### ========= mirrors 占位（可自行实现替换源） ========= ###
-apply_mirrors_once() {
-  # 如需换镜像源，在此实现；默认不做任何事，防止脚本报未定义
-  return 0
-}
 
 ### ========= 快速更新 ========= ###
 quick_update() {
@@ -308,12 +298,17 @@ install_ipv6_mirror() {
 
 
 install_docker() {
+  if curl -6 -s --max-time 5 https://ifconfig.co &>/dev/null; then
+    install_ipv6_mirror
+ fi
+  command -v docker &>/dev/null && {
       # 尝试多个安装方式
-      if ! install_with_huawei_mirror && ! install_with_huawei_mirror2 && ! install_with_get_docker && ! install_with_aliyun_mirror && ! install_ipv6_mirror; then
+      if ! install_with_huawei_mirror && ! install_with_huawei_mirror2 && ! install_with_get_docker && ! install_with_aliyun_mirror && ! install_ipv6_mirror ; then
           # 如果所有方法都失败，则退出脚本
           cecho red "Docker 安装失败，脚本终止！请尝试手动安装docker"
           exit 1
       fi
+  }
 }
 
 ensure_docker() {
@@ -344,7 +339,8 @@ build_image() {
   cd "$AGENT_DIR"
   docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$" && return
   docker load -i ./alpine_latest.tar
-  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+  docker tag alpine:latest "${IMAGE_NAME}:${IMAGE_TAG}"
+#  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 }
 
 run_container() {
@@ -399,7 +395,6 @@ main() {
 
   # ------------ 全量安装 ------------
   install_pkgs
-  is_in_china && apply_mirrors_once
   enable_bbr
   ensure_docker
   ensure_swap

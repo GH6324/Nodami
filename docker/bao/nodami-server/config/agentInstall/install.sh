@@ -14,13 +14,14 @@ ZIP_PATH="$PWD/$ZIP_NAME"
 
 IMAGE_NAME="vlink_agent"
 IMAGE_TAG="latest"
-CONTAINER="$IMAGE_NAME" # 容器同名
+CONTAINER="$IMAGE_NAME"            # 容器同名
 
-DOWNLOAD_ROOT="{{agent_api}}/down" # ← 模板占位
+DOWNLOAD_ROOT="{{agent_api}}/down"   # ← 模板占位
 DOWNLOAD_URL="$DOWNLOAD_ROOT/$ZIP_NAME"
 
 PKG_LIST=(curl wget tar lsof systemd)
-DNS_ARRAY=({{dnsServers}}) # ← 模板占位，空也没问题
+DNS_ARRAY=( {{dnsServers}} )         # ← 模板占位，空也没问题
+
 
 PKG_MGR=""
 if command -v apt-get &>/dev/null; then
@@ -34,25 +35,24 @@ else
   exit 1
 fi
 
+
 ### ========= 彩色输出 ========= ###
 cecho() {
-  local color=$1
-  shift
+  local color=$1; shift
   local msg=$*
   local code
   case $color in
-  red) code=31 ;; green) code=32 ;; yellow) code=33 ;;
-  blue) code=34 ;; purple) code=35 ;; skyBlue) code=36 ;; white) code=37 ;;
-  *) code=0 ;;
+    red) code=31 ;; green) code=32 ;; yellow) code=33 ;;
+    blue) code=34 ;; purple) code=35 ;; skyBlue) code=36 ;; white) code=37 ;;
+    *) code=0 ;;
   esac
   echo -e "\e[${code}m${msg}\e[0m"
 }
 
 ### ========= 基础工具 ========= ###
-need_root() { [ "$(id -u)" -eq 0 ] || {
-  cecho red "请用 root 运行脚本"
-  exit 1
-}; }
+need_root() { [ "$(id -u)" -eq 0 ] || { cecho red "请用 root 运行脚本"; exit 1; }; }
+
+
 
 install_pkgs() {
   # ---------- 装缺失工具 ----------
@@ -62,6 +62,10 @@ install_pkgs() {
     $PKG_MGR install -y "$p"
   done
 }
+
+
+
+
 
 ### ========= 快速更新 ========= ###
 quick_update() {
@@ -82,19 +86,19 @@ download_agent_zip() {
 
   # -- ① 如果已存在同名 zip 且解压目录有效，直接返回 --------------------------
   if [[ -f $ZIP_PATH && -x $AGENT_DIR/agent ]]; then
-    # 简单完整性校验：文件 ≥ 1M 并且 unzip -tq 正常
-    if [[ $(stat -c%s "$ZIP_PATH") -ge 1048576 ]] && unzip -tq "$ZIP_PATH" &>/dev/null; then
-      cecho skyBlue "已存在当前版本，且 zip 校验通过，跳过下载"
-      return
-    else
-      cecho yellow "检测到 zip 不完整或损坏，重新下载..."
-      rm -f "$ZIP_PATH"
-    fi
+      # 简单完整性校验：文件 ≥ 1M 并且 unzip -tq 正常
+      if [[ $(stat -c%s "$ZIP_PATH") -ge 1048576 ]] && unzip -tq "$ZIP_PATH" &>/dev/null; then
+          cecho skyBlue "已存在当前版本，且 zip 校验通过，跳过下载"
+          return
+      else
+          cecho yellow "检测到 zip 不完整或损坏，重新下载..."
+          rm -f "$ZIP_PATH"
+      fi
   fi
 
   # -- ② 清理旧 zip ----------------------------------------------------------
   find "$PWD" -maxdepth 1 -type f -name 'agent_sing_box.zip?*' \
-    ! -name "$(basename "$ZIP_PATH")" -delete
+       ! -name "$(basename "$ZIP_PATH")" -delete
 
   # -- ③ 下载到临时文件 ------------------------------------------------------
   tmp="${ZIP_PATH}.tmp"
@@ -103,16 +107,16 @@ download_agent_zip() {
   cecho skyBlue "开始下载 $ZIP_NAME ..."
   # 你也可以换成 curl -C - ；这里用 wget 带断点续传
   if ! wget -c --timeout=60 --tries=10 -O "$tmp" "$DOWNLOAD_URL"; then
-    cecho red "下载失败"
-    rm -f "$tmp"
-    exit 1
+      cecho red "下载失败"
+      rm -f "$tmp"
+      exit 1
   fi
 
   # -- ④ 校验临时文件 --------------------------------------------------------
   if [[ $(stat -c%s "$tmp") -lt 1048576 ]] || ! unzip -tq "$tmp" &>/dev/null; then
-    cecho red "下载文件损坏，请重试"
-    rm -f "$tmp"
-    exit 1
+      cecho red "下载文件损坏，请重试"
+      rm -f "$tmp"
+      exit 1
   fi
 
   mv -f "$tmp" "$ZIP_PATH"
@@ -124,10 +128,12 @@ download_agent_zip() {
   chmod +x "$AGENT_DIR/agent"
 }
 
+
+
 ### ========= 写配置 ========= ###
 write_agent_config() {
   mkdir -p "$CONFIG_DIR" "$TEMP_DIR"
-  cat >"$CONFIG_FILE" <<'EOF'
+cat > "$CONFIG_FILE" <<'EOF'
 settings:
   logLevel: info
   serverId: {{settings.serverId}}
@@ -176,6 +182,7 @@ peality:
 EOF
 }
 
+
 enable_docker_ipv6() {
   local config_file="/etc/docker/daemon.json"
   local backup_file="/etc/docker/daemon.json.bak.$(date +%s)"
@@ -213,12 +220,12 @@ enable_docker_ipv6() {
     # 🟡 情况2：存在但未开启 IPv6 → 合并写入
     cecho yellow "检测到 Docker 未启用 IPv6，开始修改配置..."
     cp "$config_file" "$backup_file"
-    jq -s '.[0] * .[1]' "$config_file" <(echo "$desired_config") >"$tmp_file" &&
-      mv "$tmp_file" "$config_file"
+    jq -s '.[0] * .[1]' "$config_file" <(echo "$desired_config") > "$tmp_file" \
+      && mv "$tmp_file" "$config_file"
     cecho green "已合并 IPv6 和日志配置，写入 daemon.json"
   else
     # 🔵 情况3：文件不存在 → 直接写默认配置
-    echo "$desired_config" >"$config_file"
+    echo "$desired_config" > "$config_file"
     cecho green "新建 daemon.json 并启用 IPv6 + 日志限制"
   fi
 
@@ -227,85 +234,86 @@ enable_docker_ipv6() {
   cecho green "Docker 已重启，IPv6 和日志配置生效"
 }
 
+
+
 # 使用华为镜像源安装 Docker
 install_with_huawei_mirror() {
-  cecho skyBlue " curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh"
-  curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh
-  cecho skyBlue "sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http"
-  sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
-  if docker -v &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+    cecho skyBlue " curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh"
+    curl -sSL https://linuxmirrors.cn/docker.sh -o /tmp/docker_install.sh
+    cecho skyBlue "sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http"
+    sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
+    if docker -v &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 install_with_huawei_mirror2() {
-  cecho skyBlue " curl -sSL {{server.docker}} -o /tmp/docker_install.sh"
-  curl -sSL {{server.docker}} -o /tmp/docker_install.sh
-  cecho skyBlue "sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http"
-  sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
-  if docker -v &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+    cecho skyBlue " curl -sSL {{server.docker}} -o /tmp/docker_install.sh"
+    curl -sSL {{server.docker}} -o /tmp/docker_install.sh
+    cecho skyBlue "sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http"
+    sudo bash /tmp/docker_install.sh --source repo.huaweicloud.com/docker-ce --source-registry mirror.gcr.io --ignore-backup-tips --install-latested true --protocol http
+    if docker -v &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # 使用 get.docker.com 安装 Docker
 install_with_get_docker() {
-  cecho skyBlue "curl -fsSL https://get.docker.com -o /tmp/get_docker.sh"
-  curl -fsSL https://get.docker.com -o /tmp/get_docker.sh
-  sudo bash /tmp/get_docker.sh
-  if docker -v &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+    cecho skyBlue "curl -fsSL https://get.docker.com -o /tmp/get_docker.sh"
+    curl -fsSL https://get.docker.com -o /tmp/get_docker.sh
+    sudo bash /tmp/get_docker.sh
+    if docker -v &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # 使用阿里云镜像源安装 Docker
 install_with_aliyun_mirror() {
-  cecho skyBlue "curl -fsSL https://get.docker.com -o /tmp/get_docker_aliyun.sh"
-  curl -fsSL https://get.docker.com -o /tmp/get_docker_aliyun.sh
-  sudo bash /tmp/get_docker_aliyun.sh --mirror Aliyun
-  if docker -v &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+    cecho skyBlue "curl -fsSL https://get.docker.com -o /tmp/get_docker_aliyun.sh"
+    curl -fsSL https://get.docker.com -o /tmp/get_docker_aliyun.sh
+    sudo bash /tmp/get_docker_aliyun.sh --mirror Aliyun
+    if docker -v &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 install_ipv6_mirror() {
-  cecho skyBlue "curl -6 -fsSL https://get.docker.com | sh"
-  curl -6 -fsSL https://get.docker.com | sh
-  if docker -v &>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+    cecho skyBlue "curl -6 -fsSL https://get.docker.com | sh"
+    curl -6 -fsSL https://get.docker.com | sh
+    if docker -v &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
 }
+
+
 
 install_docker() {
   if curl -6 -s --max-time 5 https://ifconfig.co &>/dev/null; then
     install_ipv6_mirror
-  fi
+ fi
   command -v docker &>/dev/null && {
-    # 尝试多个安装方式
-    if ! install_with_huawei_mirror && ! install_with_huawei_mirror2 && ! install_with_get_docker && ! install_with_aliyun_mirror; then
-      # 如果所有方法都失败，则退出脚本
-      cecho red "Docker 安装失败，脚本终止！请尝试手动安装docker"
-      exit 1
-    fi
+      # 尝试多个安装方式
+      if ! install_with_huawei_mirror && ! install_with_huawei_mirror2 && ! install_with_get_docker && ! install_with_aliyun_mirror && ! install_ipv6_mirror ; then
+          # 如果所有方法都失败，则退出脚本
+          cecho red "Docker 安装失败，脚本终止！请尝试手动安装docker"
+          exit 1
+      fi
   }
 }
 
 ensure_docker() {
   command -v docker &>/dev/null && {
-    systemctl is-active --quiet docker || {
-      systemctl enable docker
-      systemctl restart docker
-    }
+    systemctl is-active --quiet docker || { systemctl enable docker; systemctl restart docker; }
     return
   }
 
@@ -315,10 +323,7 @@ ensure_docker() {
 
   command -v docker &>/dev/null || install_docker
 
-  command -v docker &>/dev/null || {
-    cecho red "Docker 安装失败"
-    exit 1
-  }
+  command -v docker &>/dev/null || { cecho red "Docker 安装失败"; exit 1; }
 
   iptables -A INPUT -p tcp --dport 10000:60000 -j ACCEPT
   iptables -A INPUT -p udp --dport 10000:60000 -j ACCEPT
@@ -334,12 +339,13 @@ build_image() {
   cd "$AGENT_DIR"
   docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$" && return
   docker load -i ./alpine_latest.tar
-  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+  docker tag alpine:latest "${IMAGE_NAME}:${IMAGE_TAG}"
+#  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 }
 
 run_container() {
   docker stop "$CONTAINER" &>/dev/null || true
-  docker rm "$CONTAINER" &>/dev/null || true
+  docker rm   "$CONTAINER" &>/dev/null || true
 
   docker run -d --name "$CONTAINER" \
     -e TZ=Asia/Shanghai \
@@ -359,9 +365,11 @@ enable_bbr() {
   [[ "$(printf '%s\n' "$need" "$cur" | sort -V | head -n1)" != "$need" ]] && return
   lsmod | grep -q bbr && return
   cecho skyBlue "启用 BBR"
-  echo -e "net.core.default_qdisc=fq\nnet.ipv4.tcp_congestion_control=bbr" >>/etc/sysctl.conf
+  echo -e "net.core.default_qdisc=fq\nnet.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
   sysctl -p
 }
+
+
 
 ensure_swap() {
   [[ $(free | awk '/Swap/{print $2}') -gt 0 ]] && return
@@ -370,7 +378,7 @@ ensure_swap() {
   chmod 600 /swapfile
   mkswap /swapfile
   swapon /swapfile
-  echo '/swapfile none swap sw 0 0' >>/etc/fstab
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
   sysctl vm.swappiness=80
 }
 
@@ -380,9 +388,9 @@ main() {
 
   # ------------ 快速路径 ------------
   if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER}$" &&
-    docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$"; then
-    enable_docker_ipv6
-    quick_update
+     docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$"; then
+     enable_docker_ipv6
+     quick_update
   fi
 
   # ------------ 全量安装 ------------
