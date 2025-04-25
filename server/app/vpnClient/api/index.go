@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/base64"
 	sysApi "gfast/app/system/api"
 	"gfast/app/vpnClient/service"
 	"gfast/library"
@@ -28,6 +27,6 @@ func (c *vpnClientApi) Subscription(r *ghttp.Request) {
 		c.JsonExit(r, -1, err.Error(), nil)
 		return
 	}
-	encoded := base64.StdEncoding.EncodeToString(yamlData)
-	library.TextExit(r, encoded)
+	//encoded := base64.StdEncoding.EncodeToString(yamlData)
+	library.TextExit(r, string(yamlData))
 }
