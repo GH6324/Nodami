@@ -669,3 +669,11 @@ func IsIPv6(ipStr string) bool {
 	}
 	return ip.To4() == nil // IPv4 返回非 nil，IPv6 返回 nil
 }
+
+func TrimSpaceIpv6(ip string) string {
+	ip = strings.TrimSpace(ip)
+	if !(strings.HasPrefix(ip, "[") && strings.HasSuffix(ip, "]")) {
+		ip = fmt.Sprintf("[%s]", ip)
+	}
+	return ip
+}

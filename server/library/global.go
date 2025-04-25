@@ -91,7 +91,7 @@ func GetPublicIPv6() (string, error) {
 		ip := strings.TrimSpace(string(body))
 		parsed := net.ParseIP(ip)
 		if parsed != nil && parsed.To4() == nil {
-			return fmt.Sprintf("[%s]", ip), nil
+			return fmt.Sprintf("%s", ip), nil
 		}
 	}
 
@@ -194,7 +194,7 @@ func GetAgentAPI(isIpv6 bool) string {
 		return fmt.Sprintf("http://%s:%d", g.Cfg().GetString("debug.ip"), g.Cfg().GetInt("debug.api"))
 	}
 	if isIpv6 {
-		return fmt.Sprintf("http://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV6), 18080)
+		return fmt.Sprintf("http://%s:%d", TrimSpaceIpv6(Settings.Agent.ServerIpV6), 18080)
 	}
 	return fmt.Sprintf("http://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV4), 18080)
 
@@ -205,7 +205,7 @@ func GetAgentMqtt(isIpv6 bool) string {
 		return fmt.Sprintf("tcp://%s:%d", g.Cfg().GetString("debug.ip"), g.Cfg().GetInt("debug.mqtt"))
 	}
 	if isIpv6 {
-		return fmt.Sprintf("tcp://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV6), 1883)
+		return fmt.Sprintf("tcp://%s:%d", TrimSpaceIpv6(Settings.Agent.ServerIpV6), 1883)
 	}
 	return fmt.Sprintf("tcp://%s:%d", strings.TrimSpace(Settings.Agent.ServerIpV4), 1883)
 }
