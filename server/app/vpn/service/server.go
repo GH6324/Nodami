@@ -397,29 +397,10 @@ func (x *Server) login() (client *ssh.Client, err error) {
 
 		client = ssh.NewClient(clientConn, chans, reqs)
 	} else {
-		// 直接连接
-		if library.IsIPv6(x.Host) {
-			dialer := &net.Dialer{
-				LocalAddr: &net.TCPAddr{IP: net.ParseIP("::")}, // 强制 IPv6
-				Timeout:   10 * time.Second,
-			}
-			conn, r := dialer.Dial("tcp", x.SSHAddr)
-			if r != nil {
-				g.Log().Errorf(r.Error())
-				return
-			}
-			clientConn, chans, reqs, r := ssh.NewClientConn(conn, x.SSHAddr, config)
-			if r != nil {
-				g.Log().Errorf(r.Error())
-				return
-			}
-			client = ssh.NewClient(clientConn, chans, reqs)
-		} else {
-			client, err = ssh.Dial("tcp", x.SSHAddr, config)
-			if err != nil {
-				g.Log().Errorf(err.Error())
-				return
-			}
+		client, err = ssh.Dial("tcp", x.SSHAddr, config)
+		if err != nil {
+			g.Log().Errorf(err.Error())
+			return
 		}
 	}
 	if err != nil {

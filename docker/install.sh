@@ -61,13 +61,13 @@ enable_docker_ipv6() {
 
   # 安装 jq（如未安装）
   if ! command -v jq &>/dev/null; then
-    cecho yellow "安装 jq（用于 JSON 合并处理）..."
+    echo_content yellow "安装 jq（用于 JSON 合并处理）..."
     if command -v apt-get &>/dev/null; then
       apt-get update && apt-get install -y jq
     elif command -v yum &>/dev/null; then
       yum install -y jq
     else
-      cecho red "系统无 jq 且无法自动安装，请手动处理 daemon.json"
+      echo_content red "系统无 jq 且无法自动安装，请手动处理 daemon.json"
       return 1
     fi
   fi
@@ -79,20 +79,20 @@ enable_docker_ipv6() {
     fi
 
     # 🟡 情况2：存在但未开启 IPv6 → 合并写入
-    cecho yellow "检测到 Docker 未启用 IPv6，开始修改配置..."
+    echo_content yellow "检测到 Docker 未启用 IPv6，开始修改配置..."
     cp "$config_file" "$backup_file"
     jq -s '.[0] * .[1]' "$config_file" <(echo "$desired_config") > "$tmp_file" \
       && mv "$tmp_file" "$config_file"
-    cecho green "已合并 IPv6 和日志配置，写入 daemon.json"
+    echo_content green "已合并 IPv6 和日志配置，写入 daemon.json"
   else
     # 🔵 情况3：文件不存在 → 直接写默认配置
     echo "$desired_config" > "$config_file"
-    cecho green "新建 daemon.json 并启用 IPv6 + 日志限制"
+    echo_content green "新建 daemon.json 并启用 IPv6 + 日志限制"
   fi
 
   # 重启 Docker 服务
   systemctl restart docker
-  cecho green "Docker 已重启，IPv6 和日志配置生效"
+  echo_content green "Docker 已重启，IPv6 和日志配置生效"
 }
 
 install_docker_method() {
