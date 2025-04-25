@@ -13,7 +13,7 @@ ZIP_NAME="agent_sing_box.zip?v1.0.4.1"
 ZIP_PATH="$PWD/$ZIP_NAME"
 
 IMAGE_NAME="vlink_agent"
-IMAGE_TAG="latest"
+IMAGE_TAG="1.0.5"
 CONTAINER="$IMAGE_NAME"            # 容器同名
 
 DOWNLOAD_ROOT="{{agent_api}}/down"   # ← 模板占位
@@ -338,9 +338,7 @@ ensure_docker() {
 build_image() {
   cd "$AGENT_DIR"
   docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$" && return
-  docker load -i ./alpine_latest.tar
-  docker tag alpine:latest "${IMAGE_NAME}:${IMAGE_TAG}"
-#  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 }
 
 run_container() {
