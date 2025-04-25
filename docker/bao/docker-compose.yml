@@ -91,6 +91,12 @@ services:
 
 networks:
   nodami:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: fd00:1234:5678::/64
 
 
 

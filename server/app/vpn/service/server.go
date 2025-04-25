@@ -405,16 +405,19 @@ func (x *Server) login() (client *ssh.Client, err error) {
 			}
 			conn, r := dialer.Dial("tcp", x.SSHAddr)
 			if r != nil {
+				g.Log().Errorf(r.Error())
 				return
 			}
 			clientConn, chans, reqs, r := ssh.NewClientConn(conn, x.SSHAddr, config)
 			if r != nil {
+				g.Log().Errorf(r.Error())
 				return
 			}
 			client = ssh.NewClient(clientConn, chans, reqs)
 		} else {
 			client, err = ssh.Dial("tcp", x.SSHAddr, config)
 			if err != nil {
+				g.Log().Errorf(err.Error())
 				return
 			}
 		}

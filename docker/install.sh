@@ -41,6 +41,58 @@ install_docker() {
         check_and_start_docker
     fi
     install_docker_compose
+    enable_docker_ipv6
+}
+
+enable_docker_ipv6() {
+  local config_file="/etc/docker/daemon.json"
+  local backup_file="/etc/docker/daemon.json.bak.$(date +%s)"
+  local tmp_file
+  tmp_file=$(mktemp)
+  local desired_config='{
+    "ipv6": true,
+    "fixed-cidr-v6": "fd00:dead:beef::/64",
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "10m",
+      "max-file": "3"
+    }
+  }'
+
+  # 安装 jq（如未安装）
+  if ! command -v jq &>/dev/null; then
+    cecho yellow "安装 jq（用于 JSON 合并处理）..."
+    if command -v apt-get &>/dev/null; then
+      apt-get update && apt-get install -y jq
+    elif command -v yum &>/dev/null; then
+      yum install -y jq
+    else
+      cecho red "系统无 jq 且无法自动安装，请手动处理 daemon.json"
+      return 1
+    fi
+  fi
+
+  # ✅ 情况1：文件存在并已开启 IPv6 → 跳过
+  if [[ -f "$config_file" ]]; then
+    if jq -e '.ipv6 == true' "$config_file" &>/dev/null; then
+      return 0
+    fi
+
+    # 🟡 情况2：存在但未开启 IPv6 → 合并写入
+    cecho yellow "检测到 Docker 未启用 IPv6，开始修改配置..."
+    cp "$config_file" "$backup_file"
+    jq -s '.[0] * .[1]' "$config_file" <(echo "$desired_config") > "$tmp_file" \
+      && mv "$tmp_file" "$config_file"
+    cecho green "已合并 IPv6 和日志配置，写入 daemon.json"
+  else
+    # 🔵 情况3：文件不存在 → 直接写默认配置
+    echo "$desired_config" > "$config_file"
+    cecho green "新建 daemon.json 并启用 IPv6 + 日志限制"
+  fi
+
+  # 重启 Docker 服务
+  systemctl restart docker
+  cecho green "Docker 已重启，IPv6 和日志配置生效"
 }
 
 install_docker_method() {
@@ -162,6 +214,7 @@ reinstall_nodami() {
 }
 
 check_for_update() {
+    enable_docker_ipv6
     local installed_version latest_version
     installed_version=$(get_installed_version)
     latest_version=$(get_latest_version)
