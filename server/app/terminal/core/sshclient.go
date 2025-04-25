@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"gfast/app/vpn/service"
+	"gfast/library"
 	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/net/proxy"
@@ -92,9 +93,30 @@ func (sclient *SSHClient) GenerateClient() error {
 
 		client = ssh.NewClient(clientConn, chans, reqs)
 	} else {
-		if client, err = ssh.Dial("tcp", sclient.Server.SSHAddr, clientConfig); err != nil {
-			return err
+		//if client, err = ssh.Dial("tcp", sclient.Server.SSHAddr, clientConfig); err != nil {
+		//	return err
+		//}
+		if library.IsIPv6(sclient.Server.Host) {
+			dialer := &net.Dialer{
+				LocalAddr: &net.TCPAddr{IP: net.ParseIP("::")}, // 强制 IPv6
+				Timeout:   10 * time.Second,
+			}
+			conn, r := dialer.Dial("tcp", sclient.Server.SSHAddr)
+			if r != nil {
+				return r
+			}
+			clientConn, chans, reqs, r := ssh.NewClientConn(conn, sclient.Server.SSHAddr, clientConfig)
+			if r != nil {
+				return r
+			}
+			client = ssh.NewClient(clientConn, chans, reqs)
+		} else {
+			client, err = ssh.Dial("tcp", sclient.Server.SSHAddr, clientConfig)
+			if err != nil {
+				return err
+			}
 		}
+
 	}
 
 	sclient.Client = client
