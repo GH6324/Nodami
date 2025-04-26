@@ -168,13 +168,12 @@ func (sclient *SSHClient) GetBandwidth() (networkBytes []NetworkByte, err error)
 					UpSpeed:   (float64(upSpeed) - lastStat.UpSpeed) / float64(duration) * 8,
 					DomSpeed:  (float64(domSpeed) - lastStat.DomSpeed) / float64(duration) * 8,
 				})
-			} else {
-				lastStats[iface] = NetworkByte{
-					IfaceName: iface,
-					UpSpeed:   float64(upSpeed),
-					DomSpeed:  float64(domSpeed),
-					tmestamp:  time.Now(),
-				}
+			}
+			lastStats[iface] = NetworkByte{
+				IfaceName: iface,
+				UpSpeed:   float64(upSpeed),
+				DomSpeed:  float64(domSpeed),
+				tmestamp:  time.Now(),
 			}
 
 		}
