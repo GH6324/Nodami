@@ -9,7 +9,7 @@ CONFIG_DIR="$AGENT_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/settings.yml"
 TEMP_DIR="$AGENT_DIR/temp"
 
-ZIP_NAME="agent_sing_box.zip?v1.0.4"
+ZIP_NAME="agent_sing_box.zip?v1.0.5"
 ZIP_PATH="$PWD/$ZIP_NAME"
 
 IMAGE_NAME="vlink_agent"
@@ -339,8 +339,7 @@ build_image() {
   cd "$AGENT_DIR"
   docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$" && return
   docker load -i ./alpine_latest.tar
-  docker tag alpine:latest "${IMAGE_NAME}:${IMAGE_TAG}"
-#  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+  docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 }
 
 run_container() {
