@@ -52,6 +52,7 @@ export default {
   text-align: center;
   overflow: hidden;
 
+
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
@@ -61,6 +62,7 @@ export default {
       height: 32px;
       vertical-align: middle;
       margin-right: 12px;
+      border-radius: 10px;
     }
 
     & .sidebar-title {

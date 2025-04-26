@@ -16,7 +16,7 @@
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
-          <img :src="avatar" class="user-avatar">
+          <img :src="logo" class="user-avatar">
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
@@ -46,6 +46,8 @@ import RuoYiGit from '@/components/RuoYi/Git'
 import clearCache from '@/components/RuoYi/clearCache'
 import RuoYiDoc from '@/components/RuoYi/Doc'
 import TopNav from '@/components/TopNav'
+import logo from '@/assets/logo/logo.png'
+
 
 export default {
   components: {
@@ -60,6 +62,9 @@ export default {
     clearCache
   },
   computed: {
+    logo() {
+      return logo
+    },
     ...mapGetters([
       'sidebar',
       'avatar',
