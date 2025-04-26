@@ -13,7 +13,7 @@ ZIP_NAME="agent_sing_box.zip?v1.0.5.1"
 ZIP_PATH="$PWD/$ZIP_NAME"
 
 IMAGE_NAME="vlink_agent"
-IMAGE_TAG="1.0.5.1-arm64"
+IMAGE_TAG="1.0.5.1-amd64"
 CONTAINER="$IMAGE_NAME"            # 容器同名
 
 DOWNLOAD_ROOT="{{agent_api}}/down"   # ← 模板占位
